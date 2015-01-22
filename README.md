@@ -7,8 +7,7 @@ TML Library For Ruby
 [![Build Status](https://travis-ci.org/translationexchange/tml-ruby.png?branch=master)](https://travis-ci.org/translationexchange/tml-ruby)
 [![Coverage Status](https://coveralls.io/repos/translationexchange/tml-ruby/badge.png?branch=master)](https://coveralls.io/r/translationexchange/tml-ruby?branch=master)
 [![Gem Version](https://badge.fury.io/rb/tml-ruby.png)](http://badge.fury.io/rb/tml)
-[![Dependency Status](https://www.versioneye.com/user/projects/53cda688225426d5d500015b/badge.svg?style=flat)](https://www.versioneye.com/user/projects/53cda688225426d5d500015b)
-[![Project status](http://stillmaintained.com/translationexchange/tml-ruby.png)](http://stillmaintained.com/translationexchange/tml-ruby.png)
+[![Dependency Status](https://www.versioneye.com/user/projects/54c1457a6c00352081000416/badge.svg?style=flat)](https://www.versioneye.com/user/projects/54c1457a6c00352081000416)
 
 TML library for Ruby is a set of classes that provide translation functionality for any Ruby based application.
 The library uses Translation Markup Language that allows you to encode complex language structures in simple, yet powerful forms.
