@@ -1,0 +1,109 @@
+# encoding: UTF-8
+#--
+# Copyright (c) 2015 Translation Exchange, Inc
+#
+#  _______                  _       _   _             ______          _
+# |__   __|                | |     | | (_)           |  ____|        | |
+#    | |_ __ __ _ _ __  ___| | __ _| |_ _  ___  _ __ | |__  __  _____| |__   __ _ _ __   __ _  ___
+#    | | '__/ _` | '_ \/ __| |/ _` | __| |/ _ \| '_ \|  __| \ \/ / __| '_ \ / _` | '_ \ / _` |/ _ \
+#    | | | | (_| | | | \__ \ | (_| | |_| | (_) | | | | |____ >  < (__| | | | (_| | | | | (_| |  __/
+#    |_|_|  \__,_|_| |_|___/_|\__,_|\__|_|\___/|_| |_|______/_/\_\___|_| |_|\__,_|_| |_|\__, |\___|
+#                                                                                        __/ |
+#                                                                                       |___/
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#++
+
+require 'logger'
+
+module Tml
+
+  def self.logger
+    @logger ||= begin
+      logfile_path = File.expand_path(Tml.config.logger[:path])
+      logfile_dir = logfile_path.split("/")[0..-2].join("/")
+      FileUtils.mkdir_p(logfile_dir) unless File.exist?(logfile_dir)
+      logfile = File.open(logfile_path, 'a')
+      logfile.sync = true
+      Tml::Logger.new(logfile)
+    end
+  end
+
+  class Logger < ::Logger
+
+    def format_message(severity, timestamp, progname, msg)
+      return "" unless Tml.config.logger[:enabled]
+      # TODO: check for severity/level
+      "[#{timestamp.strftime("%D %T")}]: #{"  " * stack.size}#{msg}\n"
+    end
+
+    def add(severity, message = nil, progname = nil, &block)
+      return unless Tml.config.logger[:enabled]
+      super
+    end
+
+    def stack
+      @stack ||= []
+    end
+
+    def trace_api_call(path, params, opts = {})
+      #[:client_secret, :access_token].each do |param|
+      #  params = params.merge(param => "##filtered##") if params[param]
+      #end
+      if opts[:method] == :post
+        debug("post: [#{path}] #{params.inspect}")
+      else
+        debug("get: #{path}?#{to_query(params)}")
+      end
+      stack.push(caller)
+      t0 = Time.now
+      if block_given?
+        ret = yield
+      end
+      t1 = Time.now
+      stack.pop
+      debug("call took #{t1 - t0} seconds")
+      ret
+    end
+
+    def to_query(hash)
+      query = []
+      hash.each do |key, value|
+        query << "#{key}=#{value}"
+      end
+      query.join('&')
+    end
+
+    def trace(message)
+      debug(message)
+      stack.push(caller)
+      t0 = Time.now
+      if block_given?
+        ret = yield
+      end
+      t1 = Time.now
+      stack.pop
+      debug("execution took #{t1 - t0} seconds")
+      ret
+    end
+
+  end
+
+end
+

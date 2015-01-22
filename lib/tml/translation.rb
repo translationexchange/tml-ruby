@@ -1,0 +1,67 @@
+# encoding: UTF-8
+#--
+# Copyright (c) 2015 Translation Exchange, Inc
+#
+#  _______                  _       _   _             ______          _
+# |__   __|                | |     | | (_)           |  ____|        | |
+#    | |_ __ __ _ _ __  ___| | __ _| |_ _  ___  _ __ | |__  __  _____| |__   __ _ _ __   __ _  ___
+#    | | '__/ _` | '_ \/ __| |/ _` | __| |/ _ \| '_ \|  __| \ \/ / __| '_ \ / _` | '_ \ / _` |/ _ \
+#    | | | | (_| | | | \__ \ | (_| | |_| | (_) | | | | |____ >  < (__| | | | (_| | | | | (_| |  __/
+#    |_|_|  \__,_|_| |_|___/_|\__,_|\__|_|\___/|_| |_|______/_/\_\___|_| |_|\__,_|_| |_|\__, |\___|
+#                                                                                        __/ |
+#                                                                                       |___/
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#++
+
+class Tml::Translation < Tml::Base
+  belongs_to :translation_key, :language
+  attributes :locale, :label, :context, :precedence
+
+  def has_context_rules?
+    context and context.any?
+  end
+
+  # checks if the translation is valid for the given tokens
+  #{
+  #    "count" => {"number":"one"},
+  #    "user" => {"gender":"male"}
+  #}
+  def matches_rules?(token_values)
+    return true unless has_context_rules?
+
+    context.each do |token_name, rules|
+      token_object = Tml::Tokens::Data.token_object(token_values, token_name)
+      return false unless token_object
+
+      rules.each do |context_key, rule_key|
+        next if rule_key == 'other'
+
+        context = language.context_by_keyword(context_key)
+        return false unless context
+
+        rule = context.find_matching_rule(token_object)
+        return false if rule.nil? or rule.keyword != rule_key
+      end
+    end
+    
+    true
+  end
+
+end

@@ -1,0 +1,8 @@
+.bundle/
+.idea/
+log/
+cache/
+pkg/
+*.gem
+coverage
+Gemfile.lock

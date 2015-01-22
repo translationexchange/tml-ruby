@@ -1,0 +1,56 @@
+[{
+  "label": "Hello World",
+  "translations": {
+    "ru": [
+      {
+        "label": "Привет Мир"
+      }
+    ]
+  }
+}, {
+  "label": "Hello World",
+  "description": "Greeting context",
+  "translations": {
+    "ru": [
+      {
+        "label": "Привет Мир"
+      }
+    ]
+  }
+}, {
+  "label": "Hello [i: World]",
+  "translations": {
+    "ru": [
+      {
+        "label": "Привет [i: Мир]"
+      }
+    ]
+  }
+}, {
+  "label": "Hello [i: {user}]",
+  "translations": {
+    "ru": [
+      {
+        "label": "Привет [i: {user}]"
+      }
+    ]
+  }
+}, {
+  "label": "Hello {user.first_name} [i: {user.last_name}]",
+  "translations": {
+    "ru": [
+      {
+        "label": "Привет {user.first_name} [i: {user.last_name}]"
+      }
+    ]
+  }
+}, {
+  "label": "Hello {user}",
+  "translations": {
+    "ru": [
+      {
+        "label": "Привет {user}"
+      }
+    ]
+  }
+}]

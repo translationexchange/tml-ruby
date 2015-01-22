@@ -1,0 +1,171 @@
+[{
+  "label": "{actor} sent {target} a gift.",
+  "translations": {
+    "ru": [
+      {
+        "label": "{actor} послал подарок {target::dat}.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "male"
+            }
+          ]
+        }
+      },
+      {
+        "label": "{actor} послала подарок {target::dat}.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "female"
+            }
+          ]
+        }
+      },
+      {
+        "label": "{actor} послал/а подарок {target::dat}.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "unknown"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}, {
+  "label": "{actor} loves {target}.",
+  "translations": {
+    "ru": [
+      {
+        "label": "{actor} любит {target::gen}.",
+        "locale": "ru"
+      }
+    ]
+  }
+}, {
+  "label": "{actor} saw {target} {count||day} ago.",
+  "translations": {
+    "ru": [
+      {
+        "label": "{actor} видел {target::acc} {count} дней назад.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "male"
+            }
+          ], 
+          "count": [
+            {
+              "type": "number",
+              "key": "many"
+            }
+          ]
+        }
+      },
+      {
+        "label": "{actor} видел {target::acc} {count} дня назад.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "male"
+            }
+          ], 
+          "count": [
+            {
+              "type": "number",
+              "key": "few"
+            }
+          ]
+        }
+      },      
+      {
+        "label": "{actor} видел {target::acc} {count} день назад.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "male"
+            }
+          ], 
+          "count": [
+            {
+              "type": "number",
+              "key": "one"
+            }
+          ]
+        }
+      },        
+      {
+        "label": "{actor} видела {target::acc} {count} дней назад.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "female"
+            }
+          ], 
+          "count": [
+            {
+              "type": "number",
+              "key": "many"
+            }
+          ]
+        }
+      },
+      {
+        "label": "{actor} видела {target::acc} {count} дня назад.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "female"
+            }
+          ], 
+          "count": [
+            {
+              "type": "number",
+              "key": "few"
+            }
+          ]
+        }
+      },      
+      {
+        "label": "{actor} видела {target::acc} {count} день назад.",
+        "locale": "ru",
+        "context": {
+          "actor": [
+            {
+              "type": "gender",
+              "key": "female"
+            }
+          ], 
+          "count": [
+            {
+              "type": "number",
+              "key": "one"
+            }
+          ]
+        }
+      }      
+    ]
+  }
+}]
+
+
+
+ 

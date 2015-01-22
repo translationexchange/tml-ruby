@@ -1,0 +1,582 @@
+{
+    "locale":"ru",
+    "name":"Русский",
+    "english_name":"Russian",
+    "native_name":"Русский",
+    "flag_url":"http://localhost:3000/media/54/39/11/49/cb768f030bde97f97.png",
+    "curse_words":"блядь",
+    "contexts":{
+        "date":{
+            "keyword":"date",
+            "keys":[
+                "past",
+                "present",
+                "future"
+            ],
+            "default_key":"present",
+            "token_expression":"/.*(date|time)(\\d)*$/",
+            "variables":[
+                "@date"
+            ],
+            "token_mapping":[
+                "unsupported",
+                "unsupported",
+                {
+                    "past":"{$0}",
+                    "present":"{$1}",
+                    "future":"{$2}"
+                }
+            ],
+            "rules":{
+                "future":{
+                    "keyword":"future",
+                    "description":"{token} is in the past",
+                    "conditions":"(< @date (today))",
+                    "conditions_expression":[
+                        "<",
+                        "@date",
+                        [
+                            "today"
+                        ]
+                    ]
+                },
+                "past":{
+                    "keyword":"past",
+                    "description":"{token} is in the future",
+                    "conditions":"(> @date (today))",
+                    "conditions_expression":[
+                        ">",
+                        "@date",
+                        [
+                            "today"
+                        ]
+                    ]
+                },
+                "present":{
+                    "keyword":"present",
+                    "description":"{token} is in the present",
+                    "conditions":"(= @date (today))",
+                    "conditions_expression":[
+                        "=",
+                        "@date",
+                        [
+                            "today"
+                        ]
+                    ]
+                }
+            }
+        },
+        "gender":{
+            "keyword":"gender",
+            "keys":[
+                "male",
+                "female",
+                "other"
+            ],
+            "default_key":"other",
+            "token_expression":"/.*(user|translator|profile|actor|target)(\\d)*$/",
+            "variables":[
+                "@gender"
+            ],
+            "token_mapping":[
+                {
+                    "other":"{$0}"
+                },
+                {
+                    "male":"{$0}",
+                    "female":"{$1}",
+                    "other":"{$0}/{$1}"
+                },
+                {
+                    "male":"{$0}",
+                    "female":"{$1}",
+                    "other":"{$2}"
+                }
+            ],
+            "rules":{
+                "female":{
+                    "keyword":"female",
+                    "description":"{token} is a female",
+                    "conditions":"(= 'female' @gender)",
+                    "conditions_expression":[
+                        "=",
+                        "female",
+                        "@gender"
+                    ]
+                },
+                "male":{
+                    "keyword":"male",
+                    "description":"{token} is a male",
+                    "conditions":"(= 'male' @gender)",
+                    "conditions_expression":[
+                        "=",
+                        "male",
+                        "@gender"
+                    ]
+                },
+                "other":{
+                    "keyword":"other",
+                    "description":"{token}'s gender is unknown"
+                }
+            }
+        },
+        "genders":{
+            "keyword":"genders",
+            "keys":[
+                "male",
+                "female",
+                "unknown",
+                "other"
+            ],
+            "default_key":"other",
+            "token_expression":"/.*(users|profiles|actors|targets)(\\d)*$/",
+            "variables":[
+                "@genders"
+            ],
+            "token_mapping":[
+                "unsupported",
+                "unsupported",
+                "unsupported",
+                {
+                    "male":"{$0}",
+                    "female":"{$1}",
+                    "unknown":"{$2}",
+                    "other":"{$3}"
+                }
+            ],
+            "rules":{
+                "female":{
+                    "keyword":"female",
+                    "description":"{token} contains 1 female",
+                    "conditions":"(&& (= 1 (count @genders)) (all @genders 'female'))",
+                    "conditions_expression":[
+                        "&&",
+                        [
+                            "=",
+                            1,
+                            [
+                                "count",
+                                "@genders"
+                            ]
+                        ],
+                        [
+                            "all",
+                            "@genders",
+                            "female"
+                        ]
+                    ]
+                },
+                "male":{
+                    "keyword":"male",
+                    "description":"{token} contains 1 male",
+                    "conditions":"(&& (= 1 (count @genders)) (all @genders 'male'))",
+                    "conditions_expression":[
+                        "&&",
+                        [
+                            "=",
+                            1,
+                            [
+                                "count",
+                                "@genders"
+                            ]
+                        ],
+                        [
+                            "all",
+                            "@genders",
+                            "male"
+                        ]
+                    ]
+                },
+                "other":{
+                    "keyword":"other",
+                    "description":"{token} contains at least 2 people"
+                },
+                "unknown":{
+                    "keyword":"unknown",
+                    "description":"{token} contains 1 person with unknown gender",
+                    "conditions":"(&& (= 1 (count @genders)) (all @genders 'unknown'))",
+                    "conditions_expression":[
+                        "&&",
+                        [
+                            "=",
+                            1,
+                            [
+                                "count",
+                                "@genders"
+                            ]
+                        ],
+                        [
+                            "all",
+                            "@genders",
+                            "unknown"
+                        ]
+                    ]
+                }
+            }
+        },
+        "list":{
+            "keyword":"list",
+            "keys":[
+                "one",
+                "other"
+            ],
+            "default_key":"other",
+            "token_expression":"/.*(items|list)(\\d)*$/",
+            "variables":[
+                "@count"
+            ],
+            "token_mapping":[
+                "unsupported",
+                {
+                    "one":"{$0}",
+                    "other":"{$1}"
+                }
+            ],
+            "rules":{
+                "one":{
+                    "keyword":"one",
+                    "description":"{token} contains 1 element",
+                    "conditions":"(= 1 @count)",
+                    "conditions_expression":[
+                        "=",
+                        1,
+                        "@count"
+                    ]
+                },
+                "other":{
+                    "keyword":"other",
+                    "description":"{token} contains at least 2 elements"
+                }
+            }
+        },
+        "number":{
+            "keyword":"number",
+            "keys":[
+                "one",
+                "few",
+                "many",
+                "other"
+            ],
+            "default_key":"many",
+            "token_expression":"/.*(count|num|minutes|seconds|hours|sum|total)(\\d)*$/",
+            "variables":[
+                "@n"
+            ],
+            "token_mapping":[
+                "unsupported",
+                "unsupported",
+                {
+                    "one":"{$0}",
+                    "few":"{$1}",
+                    "many":"{$2}",
+                    "other":"{$2}"
+                },
+                {
+                    "one":"{$0}",
+                    "few":"{$1}",
+                    "many":"{$2}",
+                    "other":"{$3}"
+                }
+            ],
+            "rules":{
+                "few":{
+                    "keyword":"few",
+                    "description":"{token} mod 10 in 2..4 and {token} mod 100 not in 12..14",
+                    "examples":"2-4, 22-24, 32-34...",
+                    "conditions":"(&& (in '2..4' (mod @n 10)) (not (in '12..14' (mod @n 100))))",
+                    "conditions_expression":[
+                        "&&",
+                        [
+                            "in",
+                            "2..4",
+                            [
+                                "mod",
+                                "@n",
+                                10
+                            ]
+                        ],
+                        [
+                            "not",
+                            [
+                                "in",
+                                "12..14",
+                                [
+                                    "mod",
+                                    "@n",
+                                    100
+                                ]
+                            ]
+                        ]
+                    ]
+                },
+                "many":{
+                    "keyword":"many",
+                    "description":"{token} mod 10 is 0 or {token} mod 10 in 5..9 or {token} mod 100 in 11..14",
+                    "examples":"0, 5-20, 25-30, 35-40...",
+                    "conditions":"(|| (= 0 (mod @n 10)) (in '5..9' (mod @n 10)) (in '11..14' (mod @n 100)))",
+                    "conditions_expression":[
+                        "||",
+                        [
+                            "=",
+                            0,
+                            [
+                                "mod",
+                                "@n",
+                                10
+                            ]
+                        ],
+                        [
+                            "in",
+                            "5..9",
+                            [
+                                "mod",
+                                "@n",
+                                10
+                            ]
+                        ],
+                        [
+                            "in",
+                            "11..14",
+                            [
+                                "mod",
+                                "@n",
+                                100
+                            ]
+                        ]
+                    ]
+                },
+                "one":{
+                    "keyword":"one",
+                    "description":"{token} mod 10 is 1 and {token} mod 100 is not 11",
+                    "examples":"1, 21, 31, 41, 51, 61...",
+                    "conditions":"(&& (= 1 (mod @n 10)) (!= 11 (mod @n 100)))",
+                    "conditions_expression":[
+                        "&&",
+                        [
+                            "=",
+                            1,
+                            [
+                                "mod",
+                                "@n",
+                                10
+                            ]
+                        ],
+                        [
+                            "!=",
+                            11,
+                            [
+                                "mod",
+                                "@n",
+                                100
+                            ]
+                        ]
+                    ]
+                },
+                "other":{
+                    "keyword":"other",
+                    "examples":"1.2, 2.07, 5.94..."
+                }
+            }
+        },
+        "value":{
+            "keyword":"value",
+            "keys":[
+                "vowel",
+                "other"
+            ],
+            "default_key":"vowel",
+            "token_expression":"/.*$/",
+            "variables":[
+                "@value"
+            ],
+            "token_mapping":[
+                "unsupported",
+                {
+                    "vowel":"{$0}",
+                    "con":"{$1}"
+                }
+            ],
+            "rules":{
+                "other":{
+                    "keyword":"other",
+                    "description":"{token} starts with a consonant",
+                    "examples":"б, в, г, д, к..."
+                },
+                "vowel":{
+                    "keyword":"vowel",
+                    "description":"{token} starts with a vowel",
+                    "examples":"а, и, о, у, ы, э",
+                    "conditions":[
+                        "match",
+                        "/^[аиоуыэАИОУЭ]/",
+                        "@value"
+                    ],
+                    "conditions_expression":[
+                        "match",
+                        "/^[аиоуыэАИОУЭ]/",
+                        "@value"
+                    ]
+                }
+            }
+        }
+    },
+    "cases":{
+        "acc":{
+            "id":85,
+            "keyword":"acc",
+            "latin_name":"Accusativus",
+            "native_name":"Винительный падеж",
+            "description":"Вижу - Кого? Что?",
+            "application":"words",
+            "rules":[
+
+            ]
+        },
+        "dat":{
+            "id":86,
+            "keyword":"dat",
+            "latin_name":"Dativus",
+            "native_name":"Дательный падеж",
+            "description":"Рад - Кому? Чему?",
+            "application":"words",
+            "rules":[
+                {
+                    "id":927,
+                    "description":"If ends in 'л', append 'у'.",
+                    "examples":"Михаил => Михаилу",
+                    "conditions":"(match '/л$/' @value)",
+                    "conditions_expression":[
+                        "match",
+                        "/л$/",
+                        "@value"
+                    ],
+                    "operations":"(append 'у' @value)",
+                    "operations_expression":[
+                        "append",
+                        "у",
+                        "@value"
+                    ]
+                },
+                {
+                    "id":926,
+                    "description":"If ends in 'a', replace with 'e'",
+                    "examples":"Анна => Анне",
+                    "conditions":"(match '/а$/' @value)",
+                    "conditions_expression":[
+                        "match",
+                        "/а$/",
+                        "@value"
+                    ],
+                    "operations":"(replace '/а$/' 'е' @value)",
+                    "operations_expression":[
+                        "replace",
+                        "/а$/",
+                        "е",
+                        "@value"
+                    ]
+                }
+            ]
+        },
+        "gen":{
+            "id":87,
+            "keyword":"gen",
+            "latin_name":"Genitivus",
+            "native_name":"Родительный падеж",
+            "description":"Нет - Кого? Чего?",
+            "application":"words",
+            "rules":[
+                {
+                    "id":925,
+                    "conditions":"(match '/[бвгджзклмнпрстфхцчшщ]$/' @value)",
+                    "conditions_expression":[
+                        "match",
+                        "/[бвгджзклмнпрстфхцчшщ]$/",
+                        "@value"
+                    ],
+                    "operations":"(append 'a' @value)",
+                    "operations_expression":[
+                        "append",
+                        "а",
+                        "@value"
+                    ]
+                },
+              {
+                "id":929,
+                "conditions":"(match '/[а]$/' @value)",
+                "conditions_expression":[
+                  "match",
+                  "/[а]$/",
+                  "@value"
+                ],
+                "operations":"(replace 'a' 'ы' @value)",
+                "operations_expression":[
+                  "replace",
+                  "а",
+                  "ы",
+                  "@value"
+                ]
+              },
+              {
+                "id":930,
+                "conditions":"(match '/[ь]$/' @value)",
+                "conditions_expression":[
+                  "match",
+                  "/[ь]$/",
+                  "@value"
+                ],
+                "operations":"(replace 'ь' 'я' @value)",
+                "operations_expression":[
+                  "replace",
+                  "ь",
+                  "я",
+                  "@value"
+                ]
+              }
+            ]
+        },
+        "ins":{
+            "id":88,
+            "keyword":"ins",
+            "latin_name":"Instrumentalis",
+            "native_name":"Творительный падеж",
+            "description":"Доволен - Кем? Чем?",
+            "application":"words",
+            "rules":[
+
+            ]
+        },
+        "nom":{
+            "id":89,
+            "keyword":"nom",
+            "latin_name":"Nominativus",
+            "native_name":"Именительный падеж",
+            "description":"Есть - Кто? Что?",
+            "application":"words",
+            "rules":[
+
+            ]
+        },
+        "pos":{
+            "id":90,
+            "keyword":"pos",
+            "latin_name":"Possessive",
+            "native_name":"Притяжательный падеж",
+            "description":"Чей?",
+            "application":"words",
+            "rules":[
+
+            ]
+        },
+        "pre":{
+            "id":91,
+            "keyword":"pre",
+            "latin_name":"Prepositivus",
+            "native_name":"Предложный падеж",
+            "description":"Думаю - О ком? О чём?",
+            "application":"words",
+            "rules":[
+
+            ]
+        }
+    }
+}

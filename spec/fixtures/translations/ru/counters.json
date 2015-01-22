@@ -1,0 +1,43 @@
+[{
+  "label": "{count||message}",
+  "translations": {
+    "ru": [
+      {
+        "label": "{count} сообщение",
+        "locale": "ru",
+        "context": {
+          "count": [
+            {
+              "type": "number",
+              "key": "one"
+            }
+          ]
+        }
+      },
+      {
+        "label": "{count} сообщения",
+        "locale": "ru",
+        "context": {
+          "count": [
+            {
+              "type": "number",
+              "key": "few"
+            }
+          ]
+        }
+      },
+      {
+        "label": "{count} сообщений",
+        "locale": "ru",
+        "context": {
+          "count": [
+            {
+              "type": "number",
+              "key": "many"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}]
