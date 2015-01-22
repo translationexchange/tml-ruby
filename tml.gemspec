@@ -40,7 +40,7 @@ Gem::Specification.new do |s|
   s.version     = Tml::VERSION
   s.authors     = ['Michael Berkovich']
   s.email       = %w(michael@translationexchange.com)
-  s.homepage    = 'https://github.com/translationexchange/tml'
+  s.homepage    = 'https://github.com/translationexchange/tml-ruby'
   s.summary     = 'Tml Core Classes'
   s.description = 'Tml core classes that can be used by any Ruby framework'
 
