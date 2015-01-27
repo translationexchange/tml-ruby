@@ -334,7 +334,7 @@ module Tml
 
     def default_language
       @default_language ||= begin
-        file = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tml_core', 'languages', "#{Tml.config.default_locale}.json"))
+        file = File.expand_path(File.join(File.dirname(__FILE__), '..', 'tml', 'languages', "#{Tml.config.default_locale}.json"))
         Tml::Language.new(JSON.parse(File.read(file)))
       end
     end
