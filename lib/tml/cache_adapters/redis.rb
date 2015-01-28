@@ -44,7 +44,7 @@ class Tml::CacheAdapters::Redis < Tml::Cache
   end
 
   def cache_name
-    "redis"
+    'redis'
   end
 
   def read_only?
@@ -55,7 +55,12 @@ class Tml::CacheAdapters::Redis < Tml::Cache
     data = @cache.get(versioned_key(key, opts))
     if data
       info("Cache hit: #{key}")
-      return data
+
+      begin
+        return JSON.parse(data)
+      rescue Exception => ex
+        warn("Failed to parse data: #{ex.message}")
+      end
     end
 
     info("Cache miss: #{key}")
@@ -69,16 +74,18 @@ class Tml::CacheAdapters::Redis < Tml::Cache
     data
   rescue Exception => ex
     warn("Failed to retrieve data: #{ex.message}")
+    pp ex, ex.backtrace
     return nil unless block_given?
     yield
   end
 
   def store(key, data, opts = {})
     info("Cache store: #{key}")
+
     ttl = opts[:ttl] || Tml.config.cache[:timeout]
     versioned_key = versioned_key(key, opts)
 
-    @cache.set(versioned_key, data)
+    @cache.set(versioned_key, data.to_json)
     @cache.expire(versioned_key, ttl) if ttl and ttl > 0
   rescue Exception => ex
     warn("Failed to store data: #{ex.message}")
