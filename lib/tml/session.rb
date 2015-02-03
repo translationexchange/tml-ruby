@@ -135,7 +135,7 @@ module Tml
 
     def source_language
       (@block_options || []).reverse.each do |opts|
-        return application.language(opts[:locale]) unless opts[:locale].blank?
+        return application.language(opts[:locale]) unless opts[:locale].nil?
       end
 
       application.language
@@ -143,7 +143,7 @@ module Tml
 
     def target_language
       (@block_options || []).reverse.each do |opts|
-        return application.language(opts[:target_locale]) unless opts[:target_locale].blank?
+        return application.language(opts[:target_locale]) unless opts[:target_locale].nil?
       end
 
       current_language
