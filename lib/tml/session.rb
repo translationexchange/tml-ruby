@@ -134,18 +134,18 @@ module Tml
     end
 
     def source_language
-      arr = @block_options || []
-      arr.reverse.each do |opts|
+      (@block_options || []).reverse.each do |opts|
         return application.language(opts[:locale]) unless opts[:locale].blank?
       end
+
       application.language
     end
 
     def target_language
-      arr = @block_options || []
-      arr.reverse.each do |opts|
-        return application.language(opts[:target_locale]) unless opts[:target_locale].nil?
+      (@block_options || []).reverse.each do |opts|
+        return application.language(opts[:target_locale]) unless opts[:target_locale].blank?
       end
+
       current_language
     end
 
@@ -168,6 +168,10 @@ module Tml
 
     def block_options
       (@block_options ||= []).last || {}
+    end
+
+    def block_options_queue
+      @block_options
     end
 
     def with_block_options(opts)

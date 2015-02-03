@@ -381,11 +381,7 @@ module Tml
           return error("Missing value for #{full_name} in #{label}", false)
         end
 
-        if object.nil? and not Tml::Config.allow_nil_token_values?
-          return error("Token value is nil for #{full_name} in #{label}", false)
-        end
-
-        return label.gsub(full_name, "") if object.nil?
+        return label.gsub(full_name, '') if object.nil?
 
         value = token_value(object, language, options)
         label.gsub(full_name, value)
