@@ -51,10 +51,9 @@ describe Tml::Utils do
 
     it "should correctly sign and verify signature" do
       data = {"name" => "Michael"}
-      key = "abc"
 
-      request =  Tml::Utils.sign_and_encode_params(data, key)
-      result = Tml::Utils.decode_and_verify_params(request, key)
+      request =  Tml::Utils.encode(data)
+      result = Tml::Utils.decode(request)
       expect(result["name"]).to eq(data["name"])
     end
 

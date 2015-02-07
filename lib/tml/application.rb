@@ -33,7 +33,7 @@
 require 'faraday'
 
 class Tml::Application < Tml::Base
-  attributes :host, :id, :access_token, :key, :name, :description, :threshold, :default_locale, :default_level, :tools
+  attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level, :tools
   has_many :features, :languages, :featured_locales, :sources, :components, :tokens, :css, :shortcuts, :translations
 
   def self.cache_key

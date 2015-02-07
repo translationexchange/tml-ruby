@@ -91,10 +91,6 @@ module Tml
       yaml['defaults'].rmerge(yaml[env] || {})
     end
 
-    def self.sign_and_encode_params(params, secret)
-      URI::encode(Base64.encode64(params.to_json))
-    end
-
     def self.decode(data)
       payload = URI::decode(data)
       payload = Base64.decode64(payload)
