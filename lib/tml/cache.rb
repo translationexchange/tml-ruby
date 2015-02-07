@@ -77,7 +77,7 @@ module Tml
     end
 
     def upgrade_version
-      update_version(version + 1)
+      update_version((version || Tml.config.cache[:version] || 0).to_i + 1)
       @version = nil
     end
 

@@ -89,6 +89,7 @@ class Tml::Source < Tml::Base
 
     self
   rescue Tml::Exception => ex
+    self.translations = {}
     self
   end
 

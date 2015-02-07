@@ -97,7 +97,7 @@ class Tml::Api::Client < Tml::Base
 
     if opts[:method] == :get and opts[:cache_key]
       data = Tml.cache.fetch(opts[:cache_key]) do
-        Tml.cache.read_only? ? {} : execute_request(path, params, opts)
+        Tml.cache.read_only? ? nil : execute_request(path, params, opts)
       end
       process_response(data, opts)
     else
@@ -187,6 +187,7 @@ class Tml::Api::Client < Tml::Base
   end
 
   def process_response(data, opts)
+    return nil if data.nil?
     return data if opts['raw']
 
     if data.is_a?(Hash) and data['results']

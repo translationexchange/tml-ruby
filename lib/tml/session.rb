@@ -49,12 +49,14 @@ module Tml
       @access_token = token
     end
 
+    def cookie_name
+      "trex_#{self.application.key}"
+    end
+
     def init(opts = {})
       return unless Tml.config.enabled? and Tml.config.application
 
-      key     = opts[:key]    || Tml.config.application[:key]
-      secret  = opts[:secret] || Tml.config.application[:secret]
-      host    = opts[:host]   || Tml.config.application[:host]
+      host = opts[:host] || Tml.config.application[:host]
 
       Tml::Session.access_token ||= begin
         self.access_token = opts[:token] || Tml.config.application[:token]
@@ -64,7 +66,7 @@ module Tml
       Tml.cache.reset_version
 
       self.application = Tml.memory.fetch(Tml::Application.cache_key) do
-        Tml::Application.new(:host => host, :key => key, :secret => secret, :access_token => Tml::Session.access_token).fetch
+        Tml::Application.new(:host => host, :access_token => Tml::Session.access_token).fetch
       end
 
       if Tml.cache.read_only?
@@ -74,10 +76,11 @@ module Tml
       # Tml.logger.info(self.cookie_params.inspect)
 
       self.cookie_params = begin
-        cookie_name = "trex_#{self.application.key}"
         if opts[:cookies] and opts[:cookies][cookie_name]
           begin
-            HashWithIndifferentAccess.new(Tml::Utils.decode_and_verify_params(opts[:cookies][cookie_name], secret))
+            params = HashWithIndifferentAccess.new(Tml::Utils.decode(opts[:cookies][cookie_name]))
+            params[:locale] = opts[:locale] if opts[:change_locale]
+            params
           rescue Exception => ex
             Tml.logger.error("Failed to parse tml cookie: #{ex.message}")
             {}
@@ -89,9 +92,9 @@ module Tml
 
       self.tools_enabled = opts[:tools_enabled]
       self.current_user = opts[:user]
-      self.current_source = opts[:source] || '/tml/core'
+      self.current_source = opts[:source] || 'index'
       self.current_component = opts[:component]
-      self.current_locale = opts[:locale] || self.cookie_params[:locale] || Tml.config.default_locale
+      self.current_locale = self.cookie_params[:locale] || opts[:locale] || Tml.config.default_locale
 
       if self.cookie_params['translator']
         self.current_translator = Tml::Translator.new(self.cookie_params['translator'])
@@ -107,7 +110,8 @@ module Tml
         self.current_translator.application = self.application
       end
 
-      self.current_language = self.application.language(self.current_locale)
+      self.current_language = self.application.current_language(self.current_locale)
+      self.current_locale = self.current_language.locale
 
       self
     end

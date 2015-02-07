@@ -33,7 +33,7 @@
 require 'faraday'
 
 class Tml::Application < Tml::Base
-  attributes :host, :id, :key, :secret, :access_token, :name, :description, :threshold, :default_locale, :default_level, :tools
+  attributes :host, :id, :access_token, :key, :name, :description, :threshold, :default_locale, :default_level, :tools
   has_many :features, :languages, :featured_locales, :sources, :components, :tokens, :css, :shortcuts, :translations
 
   def self.cache_key
@@ -79,6 +79,14 @@ class Tml::Application < Tml::Base
     Tml.logger.error(e)
     Tml.logger.error(e.backtrace)
     @languages_by_locale[locale] = Tml.config.default_language
+  end
+
+  def current_language(locale)
+    locale = locale.gsub('_', '-')
+    lang = language(locale)
+    lang ||= language(locale.split('-').first) if locale.index('-')
+    lang ||= Tml.config.default_language
+    lang
   end
 
   # Mostly used for testing

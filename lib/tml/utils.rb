@@ -95,12 +95,19 @@ module Tml
       URI::encode(Base64.encode64(params.to_json))
     end
 
-    def self.decode_and_verify_params(signed_request, secret)
-      payload = URI::decode(signed_request)
+    def self.decode(data)
+      payload = URI::decode(data)
       payload = Base64.decode64(payload)
       JSON.parse(payload)
     rescue Exception => ex
       {}
+    end
+
+    def self.encode(params)
+      payload = Base64.encode64(params.to_json)
+      URI::encode(payload)
+    rescue Exception => ex
+      ''
     end
 
     def self.split_sentences(paragraph)
