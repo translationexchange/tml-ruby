@@ -108,6 +108,8 @@ module Tml
       end
 
       self.current_language = self.application.language(self.current_locale)
+
+      self
     end
 
     def tools_enabled?
