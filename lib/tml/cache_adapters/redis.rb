@@ -36,11 +36,18 @@ require 'redis' if defined?(::Redis)
 class Tml::CacheAdapters::Redis < Tml::Cache
 
   def initialize
-    cache_host, cache_port = Tml.config.cache[:host].split(':') if Tml.config.cache[:host]
-    cache_host ||= 'localhost'
-    cache_port ||= 6379
+    config = Tml.config.cache
 
-    @cache = ::Redis.new(host: cache_host, port: cache_port)
+    config[:host] ||= 'localhost'
+    config[:port] ||= 6379
+
+    if config[:host].index(':')
+      parts = config[:host].split(':')
+      config[:host] = parts.first
+      config[:port] = parts.last
+    end
+
+    @cache = ::Redis.new(config)
   end
 
   def cache_name
@@ -74,7 +81,6 @@ class Tml::CacheAdapters::Redis < Tml::Cache
     data
   rescue Exception => ex
     warn("Failed to retrieve data: #{ex.message}")
-    pp ex, ex.backtrace
     return nil unless block_given?
     yield
   end
