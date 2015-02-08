@@ -138,7 +138,7 @@ class Tml::Language < Tml::Base
     params[:tokens] ||= {}
     params[:tokens][:viewing_user] ||= Tml.session.current_user
 
-    if Tml.config.disabled? or self.locale == translation_key.locale
+    if Tml.config.disabled? or self.locale == translation_key.locale or application.nil?
       return translation_key.substitute_tokens(
         params[:label],
         params[:tokens],
