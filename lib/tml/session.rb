@@ -41,14 +41,6 @@ module Tml
     attr_accessor :application, :current_user, :current_locale, :current_language, :current_translator,
                   :current_source, :current_component, :block_options, :cookie_params, :access_token, :tools_enabled
 
-    def self.access_token
-      @access_token
-    end
-
-    def self.access_token=(token)
-      @access_token = token
-    end
-
     def cookie_name
       "trex_#{self.application.key}"
     end
@@ -58,18 +50,9 @@ module Tml
 
       host = opts[:host] || Tml.config.application[:host]
 
-      Tml::Session.access_token ||= begin
-        self.access_token = opts[:token] || Tml.config.application[:token]
-        self.access_token ||= opts[:access_token] || Tml.config.application[:access_token]
-      end
-
       Tml.cache.reset_version
 
-      self.application = Tml::Application.new(:host => host, :access_token => Tml::Session.access_token).fetch
-
-      if Tml.cache.read_only?
-        self.class.access_token = self.application.access_token
-      end
+      self.application = Tml::Application.new(:host => host).fetch
 
       # Tml.logger.info(self.cookie_params.inspect)
 

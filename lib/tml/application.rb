@@ -46,7 +46,13 @@ class Tml::Application < Tml::Base
 
   def fetch
     data = api_client.get('applications/current', {:definition => true}, {:cache_key => self.class.cache_key})
-    update_attributes(data) if data
+    if data
+      update_attributes(data)
+    else
+      Tml.logger.debug('Cache enabled but no data is provided.')
+    end
+
+    self
   rescue Tml::Exception => ex
     Tml.logger.error("Failed to load application: #{ex}")
     self
