@@ -5,7 +5,7 @@ Encoding.default_internal = Encoding::UTF_8
 
 gem 'rake', '~> 10.4'
 gem 'rdoc', '~> 4.2'
-gem 'coveralls', '~> 0.7', require: false
+gem 'coveralls', '~> 0.7.9', require: false
 
 group :test do
   gem 'rspec', '~> 3.1'
