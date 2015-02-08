@@ -143,7 +143,7 @@ class Tml::Api::Client < Tml::Base
       params = params.merge(:api_key => application.key)
     end
 
-    Tml.logger.trace_api_call(path, params, opts) do
+    trace_api_call(path, params, opts) do
       begin
         if opts[:method] == :post
           response = connection.post(path, params)
@@ -202,6 +202,35 @@ class Tml::Api::Client < Tml::Base
 
     return data unless object_class(opts)
     object_class(opts).new(data.merge(opts[:attributes] || {}))
+  end
+
+  def to_query(hash)
+    query = []
+    hash.each do |key, value|
+      query << "#{key}=#{value}"
+    end
+    query.join('&')
+  end
+
+  def trace_api_call(path, params, opts = {})
+    #[:client_secret, :access_token].each do |param|
+    #  params = params.merge(param => "##filtered##") if params[param]
+    #end
+
+    if opts[:method] == :post
+      Tml.logger.debug("post: [#{path}] #{params.inspect}")
+    else
+      Tml.logger.debug("get: #{path}?#{to_query(params)}")
+    end
+
+    t0 = Time.now
+    if block_given?
+      ret = yield
+    end
+    t1 = Time.now
+
+    Tml.logger.debug("call took #{t1 - t0} seconds")
+    ret
   end
 
 end

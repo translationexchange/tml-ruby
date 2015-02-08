@@ -36,13 +36,21 @@ module Tml
 
   def self.logger
     @logger ||= begin
-      logfile_path = File.expand_path(Tml.config.logger[:path])
-      logfile_dir = logfile_path.split("/")[0..-2].join("/")
-      FileUtils.mkdir_p(logfile_dir) unless File.exist?(logfile_dir)
-      logfile = File.open(logfile_path, 'a')
-      logfile.sync = true
-      Tml::Logger.new(logfile)
+      if Tml.config.logger[:type].to_s == 'rails'
+        Rails.logger
+      else
+        logfile_path = File.expand_path(Tml.config.logger[:path] || './log/tml.log')
+        logfile_dir = logfile_path.split("/")[0..-2].join("/")
+        FileUtils.mkdir_p(logfile_dir) unless File.exist?(logfile_dir)
+        logfile = File.open(logfile_path, 'a')
+        logfile.sync = true
+        Tml::Logger.new(logfile)
+      end
     end
+  end
+
+  def self.logger=(logger)
+    @logger = logger
   end
 
   class Logger < ::Logger
@@ -60,34 +68,6 @@ module Tml
 
     def stack
       @stack ||= []
-    end
-
-    def trace_api_call(path, params, opts = {})
-      #[:client_secret, :access_token].each do |param|
-      #  params = params.merge(param => "##filtered##") if params[param]
-      #end
-      if opts[:method] == :post
-        debug("post: [#{path}] #{params.inspect}")
-      else
-        debug("get: #{path}?#{to_query(params)}")
-      end
-      stack.push(caller)
-      t0 = Time.now
-      if block_given?
-        ret = yield
-      end
-      t1 = Time.now
-      stack.pop
-      debug("call took #{t1 - t0} seconds")
-      ret
-    end
-
-    def to_query(hash)
-      query = []
-      hash.each do |key, value|
-        query << "#{key}=#{value}"
-      end
-      query.join('&')
     end
 
     def trace(message)

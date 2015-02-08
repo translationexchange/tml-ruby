@@ -41,7 +41,7 @@ module Tml
   def self.cache
     @cache ||= begin
       if Tml.config.cache_enabled?
-        klass = Tml::CacheAdapters.const_get(Tml.config.cache[:adapter].camelcase)
+        klass = Tml::CacheAdapters.const_get(Tml.config.cache[:adapter].to_s.camelcase)
         klass.new
       else
         # blank implementation
