@@ -65,9 +65,7 @@ module Tml
 
       Tml.cache.reset_version
 
-      self.application = Tml.memory.fetch(Tml::Application.cache_key) do
-        Tml::Application.new(:host => host, :access_token => Tml::Session.access_token).fetch
-      end
+      self.application = Tml::Application.new(:host => host, :access_token => Tml::Session.access_token).fetch
 
       if Tml.cache.read_only?
         self.class.access_token = self.application.access_token

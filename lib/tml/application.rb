@@ -64,6 +64,7 @@ class Tml::Application < Tml::Base
 
   def language(locale = nil)
     locale = nil if locale.strip == ''
+
     locale ||= default_locale || Tml.config.default_locale
     @languages_by_locale ||= {}
     @languages_by_locale[locale] ||= api_client.get(

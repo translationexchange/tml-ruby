@@ -37,13 +37,10 @@ module Tml
   module Rules end
   module Decorators end
   module CacheAdapters end
-  module Generators
-    module Cache
-    end
-  end
+  module Generators end
 end
 
-%w(tml/base.rb tml tml/api tml/rules_engine tml/tokens tml/tokenizers tml/decorators tml/cache_adapters tml/cache tml/cache/generators tml/ext tml/modules tml/generators/cache).each do |f|
+%w(tml/base.rb tml tml/api tml/rules_engine tml/tokens tml/tokenizers tml/decorators tml/cache_adapters tml/cache tml/cache/generators tml/ext tml/modules tml/generators).each do |f|
   if f.index('.rb')
     require(File.expand_path(File.join(File.dirname(__FILE__), f)))
     next

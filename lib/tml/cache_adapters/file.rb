@@ -32,6 +32,10 @@
 
 class Tml::CacheAdapters::File < Tml::Cache
 
+  def self.cache
+    @cache ||= {}
+  end
+
   def self.cache_path
     "#{Tml.config.cache[:path]}/#{Tml.config.cache[:version]}"
   end
@@ -50,13 +54,17 @@ class Tml::CacheAdapters::File < Tml::Cache
   end
 
   def fetch(key, opts = {})
-    info("Fetching key: #{key}")
+    if self.class.cache[key]
+      info("Memory hit: #{key}")
+      return self.class.cache[key]
+    end
 
     path = self.class.file_path(key)
 
     if File.exists?(path)
       info("Cache hit: #{key}")
-      return JSON.parse(File.read(path))
+      self.class.cache[key] = JSON.parse(File.read(path))
+      return self.class.cache[key]
     end
 
     info("Cache miss: #{key}")
