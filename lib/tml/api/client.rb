@@ -39,19 +39,7 @@ class Tml::Api::Client < Tml::Base
   attributes :application
 
   def access_token
-    return Tml::Session.access_token if Tml::Session.access_token
-
-    application.access_token ||= begin
-      token = Tml.cache.fetch("#{application.key}/access_token") do
-        api('oauth/token', {
-          :client_id      => application.key,
-          :client_secret  => application.secret,
-          :grant_type     => :client_credentials
-        }, {:method => :post})
-      end
-      Tml::Session.access_token = token['access_token']
-      Tml::Session.access_token
-    end
+    Tml.config.application[:token] || Tml.config.application[:access_token]
   end
 
   def results(path, params = {}, opts = {})
