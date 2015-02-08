@@ -37,7 +37,6 @@ module Tml
   end
 
   class Session
-    # Session Attributes - Move to Session
     attr_accessor :application, :current_user, :current_locale, :current_language, :current_translator,
                   :current_source, :current_component, :block_options, :cookie_params, :access_token, :tools_enabled
 
