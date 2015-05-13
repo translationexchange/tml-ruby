@@ -59,7 +59,7 @@ module Tml
         v = fetch(CACHE_VERSION_KEY) do
           {'version' => Tml.config.cache[:version]}
         end
-        v['version']
+        v.is_a?(Hash) ? v['version'] : v
       end
 
       @version ||= Tml.config.cache[:version]
