@@ -10,7 +10,6 @@ describe Tml::Config do
       expect(Tml.config.default_locale).to eq("en")
       expect(Tml.config.cache[:enabled]).to be_falsey
       expect(Tml.config.logger[:path]).to eq("./log/tml.log")
-      expect(Tml.config.cache[:adapter]).to eq("memcache")
     end
   end
 
