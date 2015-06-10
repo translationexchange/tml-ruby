@@ -61,7 +61,7 @@ class Tml::CacheAdapters::Redis < Tml::Cache
   def fetch(key, opts = {})
     data = @cache.get(versioned_key(key, opts))
     if data
-      info("Cache hit: #{key}")
+      info("Cache hit: #{key} #{data}")
 
       begin
         return JSON.parse(data)

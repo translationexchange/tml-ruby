@@ -71,10 +71,11 @@ class Tml::CacheAdapters::Memcache < Tml::Cache
 
   def store(key, data, opts = {})
     info("Cache store: #{key}")
-    ttl = opts[:ttl] || Tml.config.cache[:timeout]
+    ttl = opts[:ttl] || Tml.config.cache[:timeout] || 0
     @cache.set(versioned_key(key, opts), data, ttl)
     data
   rescue Exception => ex
+    pp ex
     warn("Failed to store data: #{key}")
     data
   end

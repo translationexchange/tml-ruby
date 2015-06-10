@@ -155,16 +155,14 @@ class Tml::Language < Tml::Base
 
     source_key = current_source(options)
 
-    if Tml.cache.segmented? or Tml.session.inline_mode?
-      source = application.source(source_key, locale)
-      cached_translations = source.cached_translations(locale, translation_key.key)
-    else
-      cached_translations = application.fetch_translations(locale)[translation_key.key]
-    end
+    source = application.source(source_key, locale)
+    cached_translations = source.cached_translations(locale, translation_key.key)
 
     if cached_translations
       translation_key.set_translations(locale, cached_translations)
     else
+      params[:options] ||= {}
+      params[:options][:pending] = true
       application.register_missing_key(source_key, translation_key)
     end
 

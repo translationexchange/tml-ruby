@@ -58,50 +58,44 @@ module Tml
   class Logger < ::Logger
     attr_accessor :external_logger
 
-    def info(message)
-      if external_logger
-        return external_logger.info(format_message(Logger::Severity::INFO, Time.new, nil, message))
-      end
+    def log_to_console(msg)
+      return unless Tml.config.logger[:console]
+      puts msg
+    end
 
+    def info(message)
+      log_to_console(message)
+      return external_logger.info(format_message(Logger::Severity::INFO, Time.new, nil, message)) if external_logger
       super
     end
 
     def debug(message)
-      if external_logger
-        return external_logger.debug(format_message(Logger::Severity::DEBUG, Time.new, nil, message))
-      end
-
+      log_to_console(message)
+      return external_logger.debug(format_message(Logger::Severity::DEBUG, Time.new, nil, message)) if external_logger
       super
     end
 
     def warn(message)
-      if external_logger
-        return external_logger.warn(format_message(Logger::Severity::WARN, Time.new, nil, message))
-      end
-
+      log_to_console(message)
+      return external_logger.warn(format_message(Logger::Severity::WARN, Time.new, nil, message)) if external_logger
       super
     end
 
     def error(message)
-      if external_logger
-        return external_logger.error(format_message(Logger::Severity::ERROR, Time.new, nil, message))
-      end
-
+      log_to_console(message)
+      return external_logger.error(format_message(Logger::Severity::ERROR, Time.new, nil, message)) if external_logger
       super
     end
 
     def fatal(message)
-      if external_logger
-        return external_logger.fatal(format_message(Logger::Severity::FATAL, Time.new, nil, message))
-      end
-
+      log_to_console(message)
+      return external_logger.fatal(format_message(Logger::Severity::FATAL, Time.new, nil, message)) if external_logger
       super
     end
 
     def format_message(severity, timestamp, progname, msg)
-      return "" unless Tml.config.logger[:enabled]
-      # TODO: check for severity/level
-      "[#{timestamp.strftime("%D %T")}]: tml: #{' ' * stack.size}#{msg}\n"
+      return '' unless Tml.config.logger[:enabled]
+      "[#{timestamp.strftime('%D %T')}]: tml: #{' ' * stack.size}#{msg}\n"
     end
 
     def add(severity, message = nil, progname = nil, &block)

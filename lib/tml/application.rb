@@ -137,7 +137,7 @@ class Tml::Application < Tml::Base
   end
 
   def register_missing_key(source_key, tkey)
-    return if Tml.cache.read_only? and not Tml.session.inline_mode?
+    return if Tml.cache.enabled? and not Tml.session.inline_mode?
 
     @missing_keys_by_sources ||= {}
     @missing_keys_by_sources[source_key] ||= {}

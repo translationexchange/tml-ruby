@@ -32,7 +32,7 @@
 
 module Tml
 
-  CACHE_VERSION_KEY = '__tml_version__'
+  CACHE_VERSION_KEY = 'current_version'
 
   def self.memory
     @memory ||= Tml::CacheAdapters::Memory.new
@@ -52,89 +52,102 @@ module Tml
 
   class Cache
 
+    # Returns current cache version
     def version
-      Tml.config.cache[:version] ||= 1
-
-      @version ||= begin
-        v = fetch(CACHE_VERSION_KEY) do
-          {'version' => Tml.config.cache[:version]}
-        end
-        v['version']
-      end
-
-      @version ||= Tml.config.cache[:version]
-
-      if Tml.config.cache[:version] > @version
-        update_version(Tml.config.cache[:version])
-        @version = Tml.config.cache[:version]
-      end
-
       @version
     end
 
-    def update_version(new_version)
-      store(CACHE_VERSION_KEY, {'version' => new_version}, :ttl => 0)
+    # sets the current version
+    def version=(new_version)
+      @version = new_version
     end
 
-    def upgrade_version
-      update_version((version || Tml.config.cache[:version] || 0).to_i + 1)
-      @version = nil
-    end
-
+    # resets current version
     def reset_version
       @version = nil
     end
 
+    # upgrade current version
+    def upgrade_version
+      store(CACHE_VERSION_KEY, {'version' => 'undefined'})
+      reset_version
+    end
+
+    # fetches the version from the cache
+    def fetch_version
+      @version ||= begin
+        v = fetch(CACHE_VERSION_KEY) do
+          {'version' => Tml.config.cache[:version] || 'undefined'}
+        end
+        v.is_a?(Hash) ? v['version'] : v
+      end
+    end
+
+    # stores the current version back in cache
+    def store_version(new_version)
+      @version = new_version
+      store(CACHE_VERSION_KEY, {'version' => new_version})
+    end
+
+    # checks if Tml is enabled
     def enabled?
-      Tml.config.cache[:enabled]
+      Tml.config.cache_enabled?
     end
 
-    def cached_by_source?
-      true
-    end
-
+    # by default all cache is read/write
+    # cache like files based should be set to read only
     def read_only?
       false
     end
 
-    def segmented?
-      true
-    end
-
+    # name of the cache adapter
     def cache_name
       self.class.name.split('::').last
     end
 
+    # logs information messages
     def info(msg)
       Tml.logger.info("#{cache_name} - #{msg}")
     end
 
+    # logs a warning
     def warn(msg)
       Tml.logger.warn("#{cache_name} - #{msg}")
     end
 
-    def versioned_key(key, opts = {})
-      return key if CACHE_VERSION_KEY == key
-      "tml_rc_v#{version}_#{key}"
+    # namespace of each cache key
+    def namespace
+      return '#' if Tml.config.disabled?
+      Tml.config.cache[:namespace] || Tml.config.access_token[0..5]
     end
 
+    # versioned name of cache key
+    def versioned_key(key, opts = {})
+      "tml_#{namespace}#{CACHE_VERSION_KEY == key ? '' : "_v#{version}"}_#{key}"
+    end
+
+    # fetches key from cache
     def fetch(key, opts = {})
       return nil unless block_given?
       yield
     end
 
+    # stores key in cache
     def store(key, data, opts = {})
       # do nothing
     end
 
+    # deletes key from cache
     def delete(key, opts = {})
       # do nothing
     end
 
+    # checks if the key exists
     def exist?(key, opts = {})
       false
     end
 
+    # clears cache
     def clear(opts = {})
       # do nothing
     end

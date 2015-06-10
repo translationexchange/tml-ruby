@@ -33,15 +33,13 @@
 require 'faraday'
 
 class Tml::Api::Client < Tml::Base
+  CDN_HOST = 'https://cdn.translationexchange.com'
   API_HOST = 'https://api.translationexchange.com'
   API_PATH = '/v1'
 
   attributes :application
 
-  def access_token
-    Tml.config.application[:token] || Tml.config.application[:access_token]
-  end
-
+  # get results from api
   def results(path, params = {}, opts = {})
     get(path, params, opts)['results']
   end
@@ -78,14 +76,61 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
-  def api(path, params = {}, opts = {})
-    if Tml.session.inline_mode?
-      return process_response(execute_request(path, params, opts), opts)
+  def verify_cache_version
+    return if Tml.cache.version and Tml.cache.version != 'undefined'
+
+    current_version = Tml.cache.fetch_version
+    if current_version == 'undefined'
+      Tml.cache.store_version(execute_request('applications/current/version', {}, {:raw => true}))
+    else
+      Tml.cache.version = current_version
+    end
+    Tml.logger.info("Version: #{Tml.cache.version}")
+  end
+
+  def cdn_connection
+    @cdn_connection ||= Faraday.new(:url => CDN_HOST) do |faraday|
+      faraday.request(:url_encoded)               # form-encode POST params
+      faraday.adapter(Faraday.default_adapter)    # make requests with Net::HTTP
+    end
+  end
+
+  def get_from_cdn(key, params = {}, opts = {})
+    return nil if Tml.cache.version == 'undefined' || Tml.cache.version.to_s == '0'
+
+    response = nil
+    cdn_path = "#{Tml.config.access_token}/#{Tml.cache.version}/#{key}.json"
+    trace_api_call(cdn_path, params, opts) do
+      begin
+        response = cdn_connection.get(cdn_path, params)
+      rescue Exception => ex
+        Tml.logger.error("Failed to execute request: #{ex.message[0..255]}")
+        return nil
+      end
+    end
+    return if response.status >= 500 and response.status < 600
+    return if response.body.nil? or response.body == '' or response.body.match(/xml/)
+
+    begin
+      data = JSON.parse(response.body)
+    rescue Exception => ex
+      return nil
     end
 
-    if opts[:method] == :get and opts[:cache_key]
+    data
+  end
+
+  def api(path, params = {}, opts = {})
+    # inline mode should always bypass API calls
+    # get request uses local cache, then CDN, the API
+    if opts[:method] == :get and opts[:cache_key] and Tml.cache.enabled? and not Tml.session.inline_mode?
+      verify_cache_version
       data = Tml.cache.fetch(opts[:cache_key]) do
-        Tml.cache.read_only? ? nil : execute_request(path, params, opts)
+        if Tml.cache.read_only?
+          nil
+        else
+          get_from_cdn(opts[:cache_key]) || execute_request(path, params, opts)
+        end
       end
       process_response(data, opts)
     else
@@ -125,7 +170,7 @@ class Tml::Api::Client < Tml::Base
 
     # oauth path is separate from versioned APIs
     path = prepare_api_path(path)
-    params = params.merge(:access_token => access_token) unless path.index('oauth')
+    params = params.merge(:access_token => Tml.config.access_token) unless path.index('oauth')
 
     if opts[:method] == :post
       params = params.merge(:api_key => application.key)
@@ -155,6 +200,7 @@ class Tml::Api::Client < Tml::Base
     end
 
     return if response.body.nil? or response.body == ''
+    return response.body if opts[:raw]
 
     begin
       data = JSON.parse(response.body)
@@ -206,7 +252,7 @@ class Tml::Api::Client < Tml::Base
     #end
 
     if opts[:method] == :post
-      Tml.logger.debug("post: [#{path}] #{params.inspect}")
+      Tml.logger.debug("post: [#{path}]")
     else
       Tml.logger.debug("get: #{path}?#{to_query(params)}")
     end

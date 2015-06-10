@@ -50,7 +50,11 @@ class Tml::Decorators::Html < Tml::Decorators::Base
       # return translated_label unless Tml.session.current_translator.feature_enabled?(:show_locked_keys)
       classes << 'tml_locked'
     elsif translation_language == translation_key.language
-      classes << 'tml_not_translated'
+      if options[:pending]
+        classes << 'tml_pending'
+      else
+        classes << 'tml_not_translated'
+      end
     elsif translation_language == target_language
       classes << 'tml_translated'
     else

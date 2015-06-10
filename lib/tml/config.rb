@@ -78,7 +78,7 @@ module Tml
     attr_accessor :enabled, :default_locale, :default_level, :format, :application, :context_rules, :logger, :cache, :default_tokens, :localization
 
     # Used by Rails and Sinatra extensions
-    attr_accessor :current_locale_method, :current_user_method, :translator_options
+    attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
 
     # Used for IRB only
     attr_accessor :submit_missing_keys_realtime
@@ -166,11 +166,7 @@ module Tml
       }
 
       @cache = {
-        :enabled  => false,
-        :host     => 'localhost:11211',
-        :adapter  => 'memcache',
-        :version  => 1,
-        :timeout  => 3600
+        :enabled  => false
       }
 
       @default_tokens = {
@@ -341,6 +337,10 @@ module Tml
 
     def default_application
       @default_application ||= Tml::Application.new(:host => Tml::Api::Client::API_HOST)
+    end
+
+    def access_token
+      @application[:token] || @application[:access_token] || ''
     end
 
     #########################################################

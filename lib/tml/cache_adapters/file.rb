@@ -48,11 +48,6 @@ class Tml::CacheAdapters::File < Tml::Cache
     'file'
   end
 
-  def segmented?
-    return true if Tml.config.cache[:segmented].nil?
-    Tml.config.cache[:segmented]
-  end
-
   def fetch(key, opts = {})
     if self.class.cache[key]
       info("Memory hit: #{key}")

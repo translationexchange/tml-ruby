@@ -76,6 +76,8 @@ class Tml::Source < Tml::Base
       {:cache_key => Tml::Source.cache_key(locale, self.source)}
     )
 
+    return self unless results
+
     results.each do |key, data|
       translations_data = data.is_a?(Hash) ? data['translations'] : data
       self.translations[locale][key] = translations_data.collect do |t|

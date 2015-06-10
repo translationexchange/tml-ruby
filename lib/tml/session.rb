@@ -41,7 +41,7 @@ module Tml
                   :current_source, :current_component, :block_options, :cookie_params, :access_token, :tools_enabled
 
     def cookie_name
-      "trex_#{self.application.key}"
+      "trex_#{Tml.config.access_token[0..19]}_translationexchange"
     end
 
     def init(opts = {})
@@ -50,10 +50,6 @@ module Tml
       host = opts[:host] || Tml.config.application[:host]
 
       Tml.cache.reset_version
-
-      self.application = Tml::Application.new(:host => host).fetch
-
-      # Tml.logger.info(self.cookie_params.inspect)
 
       self.cookie_params = begin
         if opts[:cookies] and opts[:cookies][cookie_name]
@@ -70,6 +66,8 @@ module Tml
         end
       end
 
+      # Tml.logger.info(self.cookie_params.inspect)
+
       self.tools_enabled = opts[:tools_enabled]
       self.current_user = opts[:user]
       self.current_source = opts[:source] || 'index'
@@ -79,6 +77,8 @@ module Tml
       if self.cookie_params['translator']
         self.current_translator = Tml::Translator.new(self.cookie_params['translator'])
       end
+
+      self.application = Tml::Application.new(:host => host).fetch
 
       # if inline mode don't use any app cache
       if inline_mode?
