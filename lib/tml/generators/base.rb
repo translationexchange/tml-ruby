@@ -40,11 +40,21 @@ class Tml::Generators::Base
   end
 
   def cache_path
-    raise Tml::Exception.new('Must be implemented by the subclass')
+    @cache_path ||= begin
+      path = Tml.config.cache[:path]
+      path ||= 'config/tml'
+      FileUtils.mkdir_p(path)
+      FileUtils.chmod(0777, path)
+      path
+    end
+  end
+
+  def current_path
+    "#{cache_path}/current"
   end
 
   def cache_version
-    @started_at.strftime('%Y%m%d%H%M%S')
+    @cache_version ||= api_client.get_cache_version
   end
 
   def cache(key, data)
@@ -64,7 +74,6 @@ class Tml::Generators::Base
   def prepare
     @started_at = Time.now
     Tml.session.init
-    cache_path
   end
 
   def api_client
@@ -81,37 +90,33 @@ class Tml::Generators::Base
 
   def finalize
     @finished_at = Time.now
-    log("Cache has been stored in #{cache_path}")
     log("Cache generation took #{@finished_at - @started_at} mls.")
     log('Done.')
   end
 
-  def cache_application
-    log('Downloading application...')
-    cache(Tml::Application.cache_key, application)
-    log('Application has been cached.')
+  def ungzip(tarfile)
+    z = Zlib::GzipReader.new(tarfile)
+    unzipped = StringIO.new(z.read)
+    z.close
+    unzipped
   end
 
-  def cache_languages
-    log('Downloading languages...')
-    unless application['languages']
-      log('No languages are available...')
-      return
+  def untar(io, destination)
+    Gem::Package::TarReader.new io do |tar|
+      tar.each do |tarfile|
+        destination_file = File.join destination, tarfile.full_name
+
+        if tarfile.directory?
+          FileUtils.mkdir_p destination_file
+        else
+          destination_directory = File.dirname(destination_file)
+          FileUtils.mkdir_p destination_directory unless File.directory?(destination_directory)
+          File.open destination_file, "wb" do |f|
+            f.print tarfile.read
+          end
+        end
+      end
     end
-    languages.each do |lang|
-      language = api_client.get("languages/#{lang['locale']}", :definition => true)
-      cache(Tml::Language.cache_key(language['locale']), language)
-    end
-    log("#{application['languages'].count} languages have been cached.")
   end
 
-  def symlink_path
-    "#{Tml.config.cache[:path]}/current"
-  end
-
-  def generate_symlink
-    FileUtils.rm(symlink_path) if File.exist?(symlink_path)
-    FileUtils.ln_s(cache_version, symlink_path)
-    log('Symlink has been updated.')
-  end
 end

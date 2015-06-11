@@ -68,6 +68,10 @@ class Tml::Api::Client < Tml::Base
     application.host || API_HOST
   end
 
+  def cdn_host
+    CDN_HOST
+  end
+
   def connection
     @connection ||= Faraday.new(:url => host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
@@ -76,12 +80,16 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  def get_cache_version
+    execute_request('applications/current/version', {}, {:raw => true})
+  end
+
   def verify_cache_version
     return if Tml.cache.version and Tml.cache.version != 'undefined'
 
     current_version = Tml.cache.fetch_version
     if current_version == 'undefined'
-      Tml.cache.store_version(execute_request('applications/current/version', {}, {:raw => true}))
+      Tml.cache.store_version(get_cache_version)
     else
       Tml.cache.version = current_version
     end
@@ -89,7 +97,7 @@ class Tml::Api::Client < Tml::Base
   end
 
   def cdn_connection
-    @cdn_connection ||= Faraday.new(:url => CDN_HOST) do |faraday|
+    @cdn_connection ||= Faraday.new(:url => cdn_host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
       faraday.adapter(Faraday.default_adapter)    # make requests with Net::HTTP
     end
