@@ -75,19 +75,27 @@ module Tml
   # The class can be extended with a different implementation, as long as the interface is supported
   class Config
     # Configuration Attributes
-    attr_accessor :enabled, :default_locale, :default_level, :format, :application, :context_rules, :logger, :cache, :default_tokens, :localization
+    attr_accessor :enabled, :locale, :default_level, :format, :application, :context_rules, :logger, :cache, :default_tokens, :localization
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
+    attr_accessor :invalidator
 
     # Used for IRB only
     attr_accessor :submit_missing_keys_realtime
 
     def initialize
       @enabled = true
-      @default_locale = 'en'
       @default_level  = 0
       @format = :html
+      @subdomains = false
+
+      @locale = {
+        default:    'en',
+        method:     'current_locale',
+        subdomain:  false,
+        extension:  false
+      }
 
       # if running from IRB, make it default to TRUE
       @submit_missing_keys_realtime = (%w(irb pry).include?($0 || ''))
@@ -172,80 +180,88 @@ module Tml
       @default_tokens = {
         :html => {
           :data => {
-            :ndash  =>  "&ndash;",       # –
-            :mdash  =>  "&mdash;",       # —
-            :iexcl  =>  "&iexcl;",       # ¡
-            :iquest =>  "&iquest;",      # ¿
-            :quot   =>  "&quot;",        # "
-            :ldquo  =>  "&ldquo;",       # “
-            :rdquo  =>  "&rdquo;",       # ”
-            :lsquo  =>  "&lsquo;",       # ‘
-            :rsquo  =>  "&rsquo;",       # ’
-            :laquo  =>  "&laquo;",       # «
-            :raquo  =>  "&raquo;",       # »
-            :nbsp   =>  "&nbsp;",        # space
-            :lsaquo =>  "&lsaquo;",      # ‹
-            :rsaquo =>  "&rsaquo;",      # ›
-            :br     =>  "<br/>",         # line break
-            :lbrace =>  "{",
-            :rbrace =>  "}",
-            :trade  =>  "&trade;",       # TM
+            :ndash  =>  '&ndash;',       # –
+            :mdash  =>  '&mdash;',       # —
+            :iexcl  =>  '&iexcl;',       # ¡
+            :iquest =>  '&iquest;',      # ¿
+            :quot   =>  '&quot;',        # '
+            :ldquo  =>  '&ldquo;',       # “
+            :rdquo  =>  '&rdquo;',       # ”
+            :lsquo  =>  '&lsquo;',       # ‘
+            :rsquo  =>  '&rsquo;',       # ’
+            :laquo  =>  '&laquo;',       # «
+            :raquo  =>  '&raquo;',       # »
+            :nbsp   =>  '&nbsp;',        # space
+            :lsaquo =>  '&lsaquo;',      # ‹
+            :rsaquo =>  '&rsaquo;',      # ›
+            :br     =>  '<br/>',         # line break
+            :lbrace =>  '{',
+            :rbrace =>  '}',
+            :trade  =>  '&trade;',       # TM
           },
           :decoration => {
-            :strong =>  "<strong>{$0}</strong>",
-            :bold   =>  "<strong>{$0}</strong>",
-            :b      =>  "<strong>{$0}</strong>",
-            :em     =>  "<em>{$0}</em>",
-            :italic =>  "<i>{$0}</i>",
-            :i      =>  "<i>{$0}</i>",
+            :strong =>  '<strong>{$0}</strong>',
+            :bold   =>  '<strong>{$0}</strong>',
+            :b      =>  '<strong>{$0}</strong>',
+            :em     =>  '<em>{$0}</em>',
+            :italic =>  '<i>{$0}</i>',
+            :i      =>  '<i>{$0}</i>',
             :link   =>  "<a href='{$href}'>{$0}</a>",
-            :br     =>  "<br>{$0}",
-            :strike =>  "<strike>{$0}</strike>",
+            :br     =>  '<br>{$0}',
+            :strike =>  '<strike>{$0}</strike>',
             :div    =>  "<div id='{$id}' class='{$class}' style='{$style}'>{$0}</div>",
             :span   =>  "<span id='{$id}' class='{$class}' style='{$style}'>{$0}</span>",
-            :h1     =>  "<h1>{$0}</h1>",
-            :h2     =>  "<h2>{$0}</h2>",
-            :h3     =>  "<h3>{$0}</h3>",
+            :h1     =>  '<h1>{$0}</h1>',
+            :h2     =>  '<h2>{$0}</h2>',
+            :h3     =>  '<h3>{$0}</h3>',
           }
         },
         :text => {
           :data => {
-            :ndash  =>  "–",
-            :mdash  =>  "-",
-            :iexcl  =>  "¡",
-            :iquest =>  "¿",
-            :quot   =>  '"',
-            :ldquo  =>  "“",
-            :rdquo  =>  "”",
-            :lsquo  =>  "‘",
-            :rsquo  =>  "’",
-            :laquo  =>  "«",
-            :raquo  =>  "»",
-            :nbsp   =>  " ",
-            :lsaquo =>  "‹",
-            :rsaquo =>  "›",
-            :br     =>  "\n",
-            :lbrace =>  "{",
-            :rbrace =>  "}",
-            :trade  =>  "™",
+            :ndash  =>  '–',
+            :mdash  =>  '-',
+            :iexcl  =>  '¡',
+            :iquest =>  '¿',
+            :quot   =>  "'",
+            :ldquo  =>  '“',
+            :rdquo  =>  '”',
+            :lsquo  =>  '‘',
+            :rsquo  =>  '’',
+            :laquo  =>  '«',
+            :raquo  =>  '»',
+            :nbsp   =>  ' ',
+            :lsaquo =>  '‹',
+            :rsaquo =>  '›',
+            :br     =>  '\n',
+            :lbrace =>  '{',
+            :rbrace =>  '}',
+            :trade  =>  '™',
           },
           :decoration => {
-            :strong =>  "{$0}",
-            :bold   =>  "{$0}",
-            :b      =>  "{$0}",
-            :em     =>  "{$0}",
-            :italic =>  "{$0}",
-            :i      =>  "{$0}",
-            :link   =>  "{$0}:{$1}",
-            :br     =>  "\n{$0}",
-            :strike =>  "{$0}",
-            :div    =>  "{$0}",
-            :span   =>  "{$0}",
-            :h1     =>  "{$0}",
-            :h2     =>  "{$0}",
-            :h3     =>  "{$0}",
+            :strong =>  '{$0}',
+            :bold   =>  '{$0}',
+            :b      =>  '{$0}',
+            :em     =>  '{$0}',
+            :italic =>  '{$0}',
+            :i      =>  '{$0}',
+            :link   =>  '{$0}:{$1}',
+            :br     =>  '\n{$0}',
+            :strike =>  '{$0}',
+            :div    =>  '{$0}',
+            :span   =>  '{$0}',
+            :h1     =>  '{$0}',
+            :h2     =>  '{$0}',
+            :h3     =>  '{$0}',
           }
         }
+      }
+
+      @invalidator ||= {
+          enabled: true,
+          path: '/tml/upgrade',
+          auth: lambda do |request|
+            request.params[:access_token] == application[:token]
+          end
       }
 
       @localization = {
@@ -266,25 +282,25 @@ module Tml
           :date_time              => '%m/%d/%Y at %H:%M',   # 01/03/1010 at 5:30
         },
         :token_mapping => {
-          "%a" => "{short_week_day_name}",
-          "%A" => "{week_day_name}",
-          "%b" => "{short_month_name}",
-          "%B" => "{month_name}",
-          "%p" => "{am_pm}",
-          "%d" => "{days}",
-          "%e" => "{day_of_month}",
-          "%j" => "{year_days}",
-          "%m" => "{months}",
-          "%W" => "{week_num}",
-          "%w" => "{week_days}",
-          "%y" => "{short_years}",
-          "%Y" => "{years}",
-          "%l" => "{trimed_hour}",
-          "%H" => "{full_hours}",
-          "%I" => "{short_hours}",
-          "%M" => "{minutes}",
-          "%S" => "{seconds}",
-          "%s" => "{since_epoch}"
+          '%a' => '{short_week_day_name}',
+          '%A' => '{week_day_name}',
+          '%b' => '{short_month_name}',
+          '%B' => '{month_name}',
+          '%p' => '{am_pm}',
+          '%d' => '{days}',
+          '%e' => '{day_of_month}',
+          '%j' => '{year_days}',
+          '%m' => '{months}',
+          '%W' => '{week_num}',
+          '%w' => '{week_days}',
+          '%y' => '{short_years}',
+          '%Y' => '{years}',
+          '%l' => '{trimed_hour}',
+          '%H' => '{full_hours}',
+          '%I' => '{short_hours}',
+          '%M' => '{minutes}',
+          '%S' => '{seconds}',
+          '%s' => '{since_epoch}'
         }
       }
     end
@@ -318,15 +334,15 @@ module Tml
     ## Application
     #########################################################
 
-    #def default_locale
-    #  return Tml.session.application.default_locale if Tml.session.application
-    #  @default_locale
-    #end
     #
     #def default_level
     #  return Tml.session.application.default_level if Tml.session.application
     #  @default_level
     #end
+
+    def default_locale
+      @locale[:default]
+    end
 
     def default_language
       @default_language ||= begin
