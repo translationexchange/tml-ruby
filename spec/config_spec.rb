@@ -17,12 +17,12 @@ describe Tml::Config do
     it "should preserve changes" do
       expect(Tml.config.default_locale).to eq("en")
       Tml.configure do |config|
-        config.default_locale= 'ru'
+        config.locale[:default] = 'ru'
       end
       expect(Tml.config.default_locale).to eq("ru")
 
       Tml.configure do |config|
-        config.default_locale= 'en'
+        config.locale[:default]= 'en'
       end
       expect(Tml.config.default_locale).to eq("en")
     end
