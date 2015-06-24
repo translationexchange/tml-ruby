@@ -38,16 +38,20 @@ class Tml::CacheAdapters::Redis < Tml::Cache
   def initialize
     config = Tml.config.cache
 
-    config[:host] ||= 'localhost'
-    config[:port] ||= 6379
+    if config.adapter_config
+      @cache = ::Redis.new(config.adapter_config)
+    else
+      config[:host] ||= 'localhost'
+      config[:port] ||= 6379
 
-    if config[:host].index(':')
-      parts = config[:host].split(':')
-      config[:host] = parts.first
-      config[:port] = parts.last
+      if config[:host].index(':')
+        parts = config[:host].split(':')
+        config[:host] = parts.first
+        config[:port] = parts.last
+      end
+
+      @cache = ::Redis.new(config)
     end
-
-    @cache = ::Redis.new(config)
   end
 
   def cache_name

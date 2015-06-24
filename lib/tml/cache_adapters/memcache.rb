@@ -35,8 +35,9 @@ require 'dalli' if defined?(Dalli)
 class Tml::CacheAdapters::Memcache < Tml::Cache
 
   def initialize
-    options = { :namespace => Tml.config.cache[:namespace] || 'tml', :compress => Tml.config.cache[:compress].nil? ? true : Tml.config.cache[:compress]}
-    @cache = Dalli::Client.new(Tml.config.cache[:host], options)
+    config = Tml.config.cache
+    options = { :namespace => config[:namespace] || 'tml', :compress => config[:compress].nil? ? true : config[:compress] }
+    @cache = Dalli::Client.new(config[:host], options)
   end
 
   def cache_name
