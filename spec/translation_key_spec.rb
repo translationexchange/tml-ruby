@@ -11,7 +11,7 @@ describe Tml::TranslationKey do
     end
 
     it "sets attributes" do
-      expect(Tml::TranslationKey.attributes).to eq([:application, :language, :id, :key, :label, :description, :locale, :level, :locked, :translations])
+      expect(Tml::TranslationKey.attributes).to eq([:application, :language, :id, :key, :label, :description, :locale, :level, :translations])
 
       tkey = Tml::TranslationKey.new({
           :label => "Hello World",

@@ -14,6 +14,14 @@ describe Tml::Tokenizers::Decoration do
       expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello World', ']', '[/tml]'])
       expect(dt.parse).to eq(['tml', ['bold', 'Hello World']])
 
+      dt = Tml::Tokenizers::Decoration.new('<bold>Hello World</bold>')
+      expect(dt.fragments).to eq(["[tml]", "<bold>", "Hello World", "</bold>", "[/tml]"])
+      expect(dt.parse).to eq(['tml', ['bold', 'Hello World']])
+
+      dt = Tml::Tokenizers::Decoration.new('<bold>Hello <i>World</i></bold>')
+      expect(dt.fragments).to eq(["[tml]", "<bold>", "Hello ", "<i>", "World", "</i>", "</bold>", "[/tml]"])
+      expect(dt.parse).to eq(["tml", ["bold", "Hello ", ["i", "World"]]])
+
       dt = Tml::Tokenizers::Decoration.new('[bold: Hello World')
       expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello World', '[/tml]'])
       expect(dt.parse).to eq(['tml', ['bold', 'Hello World']])

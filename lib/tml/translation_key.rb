@@ -165,12 +165,12 @@ class Tml::TranslationKey < Tml::Base
   end
 
   def substitute_tokens(translated_label, token_values, language, options = {})
-    if Tml::Tokenizers::Data.required?(translated_label)
-      translated_label = Tml::Tokenizers::Data.new(translated_label, token_values, :allowed_tokens => data_tokens_names_map).substitute(language, options)
-    end
-
     if Tml::Tokenizers::Decoration.required?(translated_label)
       translated_label = Tml::Tokenizers::Decoration.new(translated_label, token_values, :allowed_tokens => decoration_tokens).substitute
+    end
+
+    if Tml::Tokenizers::Data.required?(translated_label)
+      translated_label = Tml::Tokenizers::Data.new(translated_label, token_values, :allowed_tokens => data_tokens_names_map).substitute(language, options)
     end
 
     translated_label

@@ -301,7 +301,7 @@ describe Tml::Language do
               "translations" => {
                   "ru" => [
                       {
-                          "label"=> "[bold: {user}] {user| получил, получила} <a href='url'><b>{count}</b> {count| сообщение, сообщения, сообщений}</a>"
+                          "label"=> "[bold: {user}] {user| получил, получила} [link: [bold: {count}] {count| сообщение, сообщения, сообщений}]"
                       }
                   ]
               }

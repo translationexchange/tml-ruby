@@ -39,12 +39,9 @@ describe Tml::Decorators::Html do
 
       expect(decor.decorate('Hola Mir', es, ru, translation_key)).to eq("<span class='tml_translatable tml_fallback' data-translation_key='d541c79af1be6a05b1f16fca8b5730de' data-target_locale='ru'>Hola Mir</span>")
 
-      translation_key.locked = true
-      expect(decor.decorate('Privet Mir', ru, ru, translation_key)).to eq('Privet Mir')
+      expect(decor.decorate('Privet Mir', ru, ru, translation_key, {locked: true})).to eq("<span class='tml_translatable tml_locked' data-translation_key='d541c79af1be6a05b1f16fca8b5730de' data-target_locale='ru'>Privet Mir</span>")
 
-      Tml.session.current_translator.features = {'show_locked_keys' => true}
-      Tml.session.current_translator.manager = true
-      expect(decor.decorate('Privet Mir', ru, ru, translation_key)).to eq("<span class='tml_translatable tml_locked' data-translation_key='d541c79af1be6a05b1f16fca8b5730de' data-target_locale='ru'>Privet Mir</span>")
+      expect(decor.decorate('Privet Mir', ru, ru, translation_key)).to eq("<span class='tml_translatable tml_translated' data-translation_key='d541c79af1be6a05b1f16fca8b5730de' data-target_locale='ru'>Privet Mir</span>")
     end
   end
 end

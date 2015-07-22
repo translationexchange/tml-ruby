@@ -44,6 +44,8 @@
 # [link: {count||message}]
 # [link: {count||person, people}]
 # [link: {user.name}]
+# [link] {user.name} [/link]
+# <link> {user.name} </link>
 #
 #######################################################################
 
@@ -57,12 +59,14 @@ module Tml
 
       RE_SHORT_TOKEN_START = '\[[\w]*:'
       RE_SHORT_TOKEN_END   = '\]'
-      RE_LONG_TOKEN_START  = '\[[\w]*\]'
-      RE_LONG_TOKEN_END    = '\[\/[\w]*\]'
-      RE_TEXT              = '[^\[\]]+' #'[\w\s!.:{}\(\)\|,?]*'
+      RE_LONG_TOKEN_START  = '\[[\w]*\]'                       # [link]
+      RE_LONG_TOKEN_END    = '\[\/[\w]*\]'                     # [/link]
+      RE_HTML_TOKEN_START  = '<[^\>]*>'                        # <link>
+      RE_HTML_TOKEN_END    = '<\/[^\>]*>'                      # </link>
+      RE_TEXT              = '[^\[\]<>]+'                        # '[\w\s!.:{}\(\)\|,?]*'
 
       def self.required?(label)
-        label.index('[')
+        label.index('[') or label.index('<')
       end
 
       def initialize(text, context = {}, opts = {})
@@ -77,6 +81,8 @@ module Tml
               RE_SHORT_TOKEN_END,
               RE_LONG_TOKEN_START,
               RE_LONG_TOKEN_END,
+              RE_HTML_TOKEN_START,
+              RE_HTML_TOKEN_END,
               RE_TEXT].join('|')
         @fragments = text.scan(/#{re}/)
         @tokens = []
@@ -92,6 +98,11 @@ module Tml
 
         if token.match(/#{RE_LONG_TOKEN_START}/)
           return parse_tree(token.gsub(/[\[\]]/, ''), :long)
+        end
+
+        if token.match(/#{RE_HTML_TOKEN_START}/)
+          return token if token.index('/>')
+          return parse_tree(token.gsub(/[<>]/, '').split(' ').first, :html)
         end
 
         token.to_s
@@ -113,6 +124,10 @@ module Tml
           end
         elsif type == :long
           until fragments.first.nil? or fragments.first.match(/#{RE_LONG_TOKEN_END}/)
+            tree << parse
+          end
+        elsif type == :html
+          until fragments.first.nil? or fragments.first.match(/#{RE_HTML_TOKEN_END}/)
             tree << parse
           end
         end

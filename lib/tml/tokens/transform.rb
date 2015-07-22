@@ -57,7 +57,7 @@ class Tml::Tokens::Transform < Tml::Tokens::Data
   attr_reader :pipe_separator, :piped_params
 
   def self.expression
-    /(\{[^_:|][\w]*(:[\w]+)*(::[\w]+)*\s*\|\|?[^{^}]+\})/
+    /(%?\{{1,2}\s*[\w]*\s*(:\s*\w+)*\s*\|\|?[^\{\}\|]+\}{1,2})/
   end
 
   def parse_elements

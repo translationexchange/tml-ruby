@@ -11,7 +11,7 @@ describe Tml::Translation do
     end
 
     it "sets attributes" do
-      expect(Tml::Translation.attributes).to eq([:translation_key, :language, :locale, :label, :context, :precedence])
+      expect(Tml::Translation.attributes).to eq([:translation_key, :language, :locale, :label, :context, :precedence, :locked])
 
       t = Tml::Translation.new(:label => "You have {count||message}", :context => {"count" => {"number" => "one"}}, :language => @russian)
 
