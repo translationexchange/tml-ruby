@@ -41,11 +41,10 @@ class Tml::Decorators::Html < Tml::Decorators::Base
     # if translation key language is the same as target language - skip decorations
     return translated_label if translation_key.language == target_language
     return translated_label unless inline_mode?
-    return translated_label if translation_key.locked? and not Tml.session.current_translator.manager?
 
     classes = %w(tml_translatable)
-    
-    if translation_key.locked?
+
+    if options[:locked]
       # must be a manager and enabling locking feature
       # return translated_label unless Tml.session.current_translator.feature_enabled?(:show_locked_keys)
       classes << 'tml_locked'

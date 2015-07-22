@@ -34,7 +34,7 @@ require 'digest/md5'
 
 class Tml::TranslationKey < Tml::Base
   belongs_to :application, :language
-  attributes :id, :key, :label, :description, :locale, :level, :locked
+  attributes :id, :key, :label, :description, :locale, :level
   has_many :translations # hashed by language
 
   def initialize(attrs = {})
@@ -118,6 +118,7 @@ class Tml::TranslationKey < Tml::Base
     decorator = Tml::Decorators::Base.decorator
 
     if translation
+      options[:locked] = translation.locked
       translated_label = substitute_tokens(translation.label, token_values, translation.language, options)
       return decorator.decorate(translated_label, translation.language, language, self, options)
     end

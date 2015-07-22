@@ -84,6 +84,7 @@ class Tml::Source < Tml::Base
         Tml::Translation.new(
           :locale => t['locale'] || locale,
           :label => t['label'],
+          :locked => t['locked'],
           :context => t['context']
         )
       end

@@ -32,7 +32,7 @@
 
 class Tml::Translation < Tml::Base
   belongs_to :translation_key, :language
-  attributes :locale, :label, :context, :precedence
+  attributes :locale, :label, :context, :precedence, :locked
 
   def has_context_rules?
     context and context.any?
