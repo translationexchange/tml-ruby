@@ -211,7 +211,7 @@ module Tml
       end
 
       def substitute
-        evaluate(parse)
+        evaluate(parse).gsub('[/tml]', '')
       end
 
     end
