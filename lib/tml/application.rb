@@ -45,7 +45,7 @@ class Tml::Application < Tml::Base
   end
 
   def fetch
-    data = api_client.get('applications/current', {:definition => true}, {:cache_key => self.class.cache_key})
+    data = api_client.get('applications/current/definition', {}, {:cache_key => self.class.cache_key})
     if data
       update_attributes(data)
     else
