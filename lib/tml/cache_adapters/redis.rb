@@ -38,8 +38,8 @@ class Tml::CacheAdapters::Redis < Tml::Cache
   def initialize
     config = Tml.config.cache
 
-    if config.adapter_config
-      @cache = ::Redis.new(config.adapter_config)
+    if config[:adapter_config]
+      @cache = ::Redis.new(config[:adapter_config])
     else
       config[:host] ||= 'localhost'
       config[:port] ||= 6379
