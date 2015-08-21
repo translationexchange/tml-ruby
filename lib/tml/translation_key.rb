@@ -110,7 +110,7 @@ class Tml::TranslationKey < Tml::Base
   end
 
   def translate(language, token_values = {}, options = {})
-    if Tml.config.disabled? or language.locale == self.locale
+    if Tml.config.disabled?
       return substitute_tokens(label, token_values, language, options.merge(:fallback => false))
     end
 

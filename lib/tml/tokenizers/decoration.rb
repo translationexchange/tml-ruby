@@ -182,7 +182,6 @@ module Tml
             return method.to_s.gsub('{$0}', value)
           end
 
-          Tml.logger.error("Invalid decoration token value for #{token} in #{text}")
           return value
         end
 
@@ -190,7 +189,6 @@ module Tml
           return default_decoration(token, value)
         end
 
-        Tml.logger.error("Missing decoration token value for #{token} in #{text}")
         value
       end
 

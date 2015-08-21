@@ -37,12 +37,8 @@ module Tml
   end
 
   class Session
-    attr_accessor :application, :current_user, :current_locale, :current_language, :current_translator,
-                  :current_source, :current_component, :block_options, :cookie_params, :access_token, :tools_enabled
-
-    def cookie_name
-      "trex_#{Tml.config.application[:key]}"
-    end
+    attr_accessor :application, :block_options
+    attr_accessor :current_user, :current_locale, :current_language, :current_translator, :current_source
 
     def init(opts = {})
       return unless Tml.config.enabled? and Tml.config.application
@@ -51,53 +47,36 @@ module Tml
 
       Tml.cache.reset_version
 
-      self.cookie_params = begin
-        if opts[:cookies] and opts[:cookies][cookie_name]
-          begin
-            params = HashWithIndifferentAccess.new(Tml::Utils.decode(opts[:cookies][cookie_name]))
-            params[:locale] = opts[:locale] if opts[:change_locale]
-            params
-          rescue Exception => ex
-            Tml.logger.error("Failed to parse tml cookie: #{ex.message}")
-            {}
-          end
-        else
-          {}
-        end
-      end
-
-      # Tml.logger.info(self.cookie_params.inspect)
-
-      self.tools_enabled = opts[:tools_enabled]
       self.current_user = opts[:user]
       self.current_source = opts[:source] || 'index'
-      self.current_component = opts[:component]
-      self.current_locale = self.cookie_params[:locale] || opts[:locale] || Tml.config.default_locale
-
-      if self.cookie_params['translator']
-        self.current_translator = Tml::Translator.new(self.cookie_params['translator'])
-      end
+      self.current_locale = opts[:locale]
+      self.current_translator = opts[:translator]
 
       self.application = Tml::Application.new(:host => host).fetch
 
       # if inline mode don't use any app cache
-      if inline_mode?
-        self.application = self.application.dup
-        self.application.reset_translation_cache
-      end
+      # if inline_mode?
+      #   self.application = self.application.dup
+      #   self.application.reset_translation_cache
+      # end
 
       if self.current_translator
         self.current_translator.application = self.application
       end
 
+      self.current_locale = preferred_locale(opts[:locale])
       self.current_language = self.application.current_language(self.current_locale)
-      self.current_locale = self.current_language.locale
 
       self
     end
 
-    def tools_enabled?
-      self.tools_enabled
+    def preferred_locale(locales)
+      locales = locales.is_a?(String) ? locales.split(',') : locales
+      locales.each do |locale|
+        next unless application.locales.include?(locale)
+        return locale
+      end
+      application.default_locale
     end
 
     def reset
@@ -106,8 +85,6 @@ module Tml
       self.current_language= nil
       self.current_translator= nil
       self.current_source= nil
-      self.current_component= nil
-      self.tools_enabled= nil
       self.block_options= nil
     end
 
@@ -175,14 +152,6 @@ module Tml
         return application.source_by_key(opts[:source]) unless opts[:source].blank?
       end
       nil
-    end
-
-    def current_component_from_block_options
-      arr = @block_options || []
-      arr.reverse.each do |opts|
-        return application.component_by_key(opts[:component]) unless opts[:component].blank?
-      end
-      Tml.config.current_component
     end
 
   end

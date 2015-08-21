@@ -35,12 +35,11 @@ class Tml::Decorators::Html < Tml::Decorators::Base
   def decorate(translated_label, translation_language, target_language, translation_key, options = {})
     #Tml.logger.info("Decorating #{translated_label} of #{translation_language.locale} to #{target_language.locale}")
 
-    # skip decoration if instructed so
-    return translated_label if options[:skip_decorations]
-
     # if translation key language is the same as target language - skip decorations
-    return translated_label if translation_key.language == target_language
-    return translated_label unless inline_mode?
+    if options[:skip_decorations] or not inline_mode? or
+       (translation_key.application.feature_enabled?(:lock_original_content) and translation_key.language == target_language)
+      return translated_label
+    end
 
     classes = %w(tml_translatable)
 
@@ -60,7 +59,8 @@ class Tml::Decorators::Html < Tml::Decorators::Base
       classes << 'tml_fallback'
     end
 
-    element = 'span'
+    element = 'tml:label'
+    element = 'span' if options[:use_span]
     element = 'div' if options[:use_div]
 
     html = "<#{element} class='#{classes.join(' ')}' data-translation_key='#{translation_key.key}' data-target_locale='#{target_language.locale}'>"

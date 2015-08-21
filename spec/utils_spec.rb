@@ -36,13 +36,13 @@ describe Tml::Utils do
     it "should correctly split by sentence" do
 
       expect(
-          Tml::Utils.split_by_sentence("Hello World")
+          Tml::Utils.split_sentences("Hello World")
       ).to eq(
           ["Hello World"]
       )
 
       expect(
-          Tml::Utils.split_by_sentence("This is the first sentence. Followed by the second one.")
+          Tml::Utils.split_sentences("This is the first sentence. Followed by the second one.")
       ).to eq(
            ["This is the first sentence.", "Followed by the second one."]
        )

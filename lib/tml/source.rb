@@ -64,11 +64,28 @@ class Tml::Source < Tml::Base
     self.key ||= Tml::Source.generate_key(attrs[:source])
   end
 
+  def update_translations(locale, results)
+    self.translations ||= {}
+    self.translations[locale] = {}
+
+    results.each do |key, data|
+      translations_data = data.is_a?(Hash) ? data['translations'] : data
+      self.translations[locale][key] = translations_data.collect do |t|
+        Tml::Translation.new(
+          locale:   t['locale'] || locale,
+          label:    t['label'],
+          locked:   t['locked'],
+          context:  t['context']
+        )
+      end
+    end
+  end
+
   def fetch_translations(locale)
     self.translations ||= {}
     return self if self.translations[locale]
 
-    self.translations[locale] = {}
+    # Tml.logger.debug("Fetching #{source}")
 
     results = self.application.api_client.get(
       "sources/#{self.key}/translations",
@@ -78,17 +95,7 @@ class Tml::Source < Tml::Base
 
     return self unless results
 
-    results.each do |key, data|
-      translations_data = data.is_a?(Hash) ? data['translations'] : data
-      self.translations[locale][key] = translations_data.collect do |t|
-        Tml::Translation.new(
-          :locale => t['locale'] || locale,
-          :label => t['label'],
-          :locked => t['locked'],
-          :context => t['context']
-        )
-      end
-    end
+    update_translations(locale, results)
 
     self
   rescue Tml::Exception => ex

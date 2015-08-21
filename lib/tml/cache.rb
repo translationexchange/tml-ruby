@@ -34,10 +34,6 @@ module Tml
 
   CACHE_VERSION_KEY = 'current_version'
 
-  def self.memory
-    @memory ||= Tml::CacheAdapters::Memory.new
-  end
-
   def self.cache
     @cache ||= begin
       if Tml.config.cache_enabled?
@@ -150,6 +146,22 @@ module Tml
     # clears cache
     def clear(opts = {})
       # do nothing
+    end
+
+    def strip_extensions(data)
+      if data.is_a?(Hash)
+        data = data.dup
+        data['extensions'] = nil
+        return data
+      end
+
+      if data.is_a?(String) and data.match(/^\{/)
+        data = JSON.parse(data)
+        data['extensions'] = nil
+        data = data.to_json
+      end
+
+      data
     end
 
   end

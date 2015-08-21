@@ -62,19 +62,12 @@ module Tml
       (0..16).to_a.map{|a| rand(16).to_s(16)}.join
     end
 
-    def self.hash_value(hash, key)
-      hash[key.to_s] || hash[key.to_sym]
+    def self.cookie_name(app_key)
+      "trex_#{app_key}"
     end
 
-    def self.split_by_sentence(text)
-      sentence_regex = /[^.!?\s][^.!?]*(?:[.!?](?![\'"]?\s|$)[^.!?]*)*[.!?]?[\'"]?(?=\s|$)/
-
-      sentences = []
-      text.scan(sentence_regex).each do |s|
-        sentences << s
-      end
-
-      sentences
+    def self.hash_value(hash, key)
+      hash[key.to_s] || hash[key.to_sym]
     end
 
     def self.load_json(file_path, env = nil)
@@ -91,36 +84,47 @@ module Tml
       yaml['defaults'].rmerge(yaml[env] || {})
     end
 
-    def self.decode(data)
+    def self.decode(data, secret = nil)
       payload = URI::decode(data)
       payload = Base64.decode64(payload)
-      JSON.parse(payload)
+      data = JSON.parse(payload)
+
+      # TODO: Verify signature
+
+      data
     rescue Exception => ex
       {}
     end
 
-    def self.encode(params)
+    def self.encode(params, secret = nil)
+
+      # TODO: Add signature
+
       payload = Base64.encode64(params.to_json)
       URI::encode(payload)
     rescue Exception => ex
       ''
     end
 
-    def self.split_sentences(paragraph)
+    def self.split_sentences(text)
       sentence_regex = /[^.!?\s][^.!?]*(?:[.!?](?![\'"]?\s|$)[^.!?]*)*[.!?]?[\'"]?(?=\s|$)/
-      paragraph.match(sentence_regex)
+
+      sentences = []
+      text.scan(sentence_regex).each do |s|
+        sentences << s
+      end
+
+      sentences
     end
 
-    ######################################################################
-    # Author: Iain Hecker
-    # reference: http://github.com/iain/http_accept_language
-    ######################################################################
-    def self.browser_accepted_locales(request)
-      request.env['HTTP_ACCEPT_LANGUAGE'].split(/\s*,\s*/).collect do |l|
+    def self.browser_accepted_locales(header)
+      header.split(/\s*,\s*/).collect do |l|
         l += ';q=1.0' unless l =~ /;q=\d+\.\d+$/
         l.split(';q=')
       end.sort do |x,y|
-        raise Tml::Exception.new('Not correctly formatted') unless x.first =~ /^[a-z\-]+$/i
+        unless x.first =~ /^[a-z\-]+$/i
+          raise Tml::Exception.new('Not correctly formatted')
+        end
         y.last.to_f <=> x.last.to_f
       end.collect do |l|
         l.first.downcase.gsub(/-[a-z]+$/i) { |x| x.upcase }

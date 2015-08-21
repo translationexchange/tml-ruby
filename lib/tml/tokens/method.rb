@@ -54,7 +54,7 @@ class Tml::Tokens::Method < Tml::Tokens::Data
 
   def substitute(label, context, language, options = {})
     object = Tml::Utils.hash_value(context, object_name)
-    raise Tml::Exception.new("Missing value for a token: #{full_name}") unless object
+    return label unless object
     object_value = sanitize(object.send(object_method_name), object, language, options.merge(:safe => false))
     label.gsub(full_name, object_value)
   end

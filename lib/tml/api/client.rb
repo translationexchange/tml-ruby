@@ -109,10 +109,12 @@ class Tml::Api::Client < Tml::Base
     return nil if Tml.cache.version == 'undefined' || Tml.cache.version.to_s == '0'
 
     response = nil
-    cdn_path = "#{Tml.config.access_token}/#{Tml.cache.version}/#{key}.json"
-    trace_api_call(cdn_path, params, opts) do
+    cdn_path = "/#{Tml.config.application[:key]}/#{Tml.cache.version}/#{key}.json.gz"
+    trace_api_call(cdn_path, params, opts.merge(:host => cdn_host)) do
       begin
-        response = cdn_connection.get(cdn_path, params)
+        response = cdn_connection.get do |request|
+          prepare_request(request, cdn_path, params)
+        end
       rescue Exception => ex
         Tml.logger.error("Failed to execute request: #{ex.message[0..255]}")
         return nil
@@ -121,8 +123,14 @@ class Tml::Api::Client < Tml::Base
     return if response.status >= 500 and response.status < 600
     return if response.body.nil? or response.body == '' or response.body.match(/xml/)
 
+    compressed_data = response.body
+    return if compressed_data.nil? or compressed_data == ''
+
+    data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
+    Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+
     begin
-      data = JSON.parse(response.body)
+      data = JSON.parse(data)
     rescue Exception => ex
       return nil
     end
@@ -195,22 +203,18 @@ class Tml::Api::Client < Tml::Base
       params = params.merge(:api_key => application.key)
     end
 
-    trace_api_call(path, params, opts) do
+    @compressed = false
+    trace_api_call(path, params, opts.merge(:host => host)) do
       begin
         if opts[:method] == :post
-          response = connection.post do |request|
-            prepare_request(request, path, params)
-          end
+          response = connection.post(path, params)
         elsif opts[:method] == :put
-          response = connection.put do |request|
-            prepare_request(request, path, params)
-          end
+          response = connection.put(path, params)
         elsif opts[:method] == :delete
-          response = connection.delete do |request|
-            prepare_request(request, path, params)
-          end
+          response = connection.delete(path, params)
         else
           response = connection.get do |request|
+            @compressed = true
             prepare_request(request, path, params)
           end
         end
@@ -226,11 +230,15 @@ class Tml::Api::Client < Tml::Base
       raise Tml::Exception.new("Error: #{response.body}")
     end
 
-    compressed_data = response.body
-    return if compressed_data.nil? or compressed_data == ''
+    if @compressed
+      compressed_data = response.body
+      return if compressed_data.nil? or compressed_data == ''
 
-    data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
-    Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+      data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
+      Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+    else
+      data = response.body
+    end
 
     return data if opts[:raw]
 
@@ -284,9 +292,13 @@ class Tml::Api::Client < Tml::Base
     #end
 
     if opts[:method] == :post
-      Tml.logger.debug("post: [#{path}]")
+      Tml.logger.debug("post: #{opts[:host]}#{path}")
     else
-      Tml.logger.debug("get: #{path}?#{to_query(params)}")
+      if params.any?
+        Tml.logger.debug("get: #{opts[:host]}#{path}?#{to_query(params)}")
+      else
+        Tml.logger.debug("get: #{opts[:host]}#{path}")
+      end
     end
 
     t0 = Time.now

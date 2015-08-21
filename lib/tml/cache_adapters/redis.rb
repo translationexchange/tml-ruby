@@ -95,7 +95,7 @@ class Tml::CacheAdapters::Redis < Tml::Cache
     ttl = opts[:ttl] || Tml.config.cache[:timeout]
     versioned_key = versioned_key(key, opts)
 
-    @cache.set(versioned_key, data.to_json)
+    @cache.set(versioned_key, strip_extensions(data.to_json))
     @cache.expire(versioned_key, ttl) if ttl and ttl > 0
   rescue Exception => ex
     warn("Failed to store data: #{ex.message}")

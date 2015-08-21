@@ -34,7 +34,7 @@ require 'faraday'
 
 class Tml::Application < Tml::Base
   attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level, :tools
-  has_many :features, :languages, :featured_locales, :sources, :tokens, :css, :shortcuts, :translations
+  has_many :features, :languages, :languages_by_locale, :sources, :tokens, :css, :shortcuts, :translations, :extensions
 
   # Returns application cache key
   def self.cache_key
@@ -47,13 +47,12 @@ class Tml::Application < Tml::Base
   end
 
   def fetch
-    data = api_client.get(
-      'projects/current/definition',
-      {},
-      {
-        cache_key: self.class.cache_key
-      }
-    )
+    data = api_client.get('projects/current/definition',{
+      locale: Tml.session.current_locale,
+      source: Tml.session.current_source
+    }, {
+      cache_key: self.class.cache_key
+    })
 
     if data
       update_attributes(data)
@@ -75,27 +74,60 @@ class Tml::Application < Tml::Base
       self.attributes[:languages] = hash_value(attrs, :languages).collect{ |l| Tml::Language.new(l.merge(:application => self)) }
     end
 
+    load_extensions(hash_value(attrs, :extensions))
+
     self
+  end
+
+  def load_extensions(extensions)
+    return if extensions.nil?
+    source_locale = default_locale
+
+    cache = Tml.cache
+    cache = nil if not Tml.cache.enabled? or Tml.session.inline_mode?
+
+    if hash_value(extensions, :languages)
+      self.languages_by_locale ||= {}
+      hash_value(extensions, :languages).each do |locale, data|
+        source_locale = locale if locale != source_locale
+        cache.store(Tml::Language.cache_key(locale), data) if cache
+        self.languages_by_locale[locale] = Tml::Language.new(data.merge(
+          locale: locale,
+          application: self
+        ))
+      end
+    end
+
+    if hash_value(extensions, :sources)
+      self.sources ||= {}
+      hash_value(extensions, :sources).each do |source, data|
+        cache.store(Tml::Source.cache_key(source_locale, source), data) if cache
+        self.sources[source] ||= Tml::Source.new(
+          application:  self,
+          source:       source
+        )
+        self.sources[source].update_translations(source_locale, data['results'])
+      end
+    end
   end
 
   def language(locale = nil)
     locale = nil if locale.strip == ''
 
     locale ||= default_locale || Tml.config.default_locale
-    @languages_by_locale ||= {}
-    @languages_by_locale[locale] ||= api_client.get(
-      "languages/#{locale}/definition",
-      {},
-      {
-        :class => Tml::Language,
-        :attributes => {:locale => locale, :application => self},
-        :cache_key => Tml::Language.cache_key(locale)
-      }
-    )
+    locale = locale.to_s
+
+    self.languages_by_locale ||= {}
+    self.languages_by_locale[locale] ||= api_client.get("languages/#{locale}/definition", {
+    }, {
+      class:      Tml::Language,
+      attributes: {locale: locale, application: self},
+      cache_key:  Tml::Language.cache_key(locale)
+    })
   rescue Tml::Exception => e
     Tml.logger.error(e)
     Tml.logger.error(e.backtrace)
-    @languages_by_locale[locale] = Tml.config.default_language
+    self.languages_by_locale[locale] = Tml.config.default_language
   end
 
   def current_language(locale)
@@ -106,13 +138,12 @@ class Tml::Application < Tml::Base
     lang
   end
 
-  # Mostly used for testing
   def add_language(new_language)
-    @languages_by_locale ||= {}
-    return @languages_by_locale[new_language.locale] if @languages_by_locale[new_language.locale]
+    self.languages_by_locale ||= {}
+    return self.languages_by_locale[new_language.locale] if self.languages_by_locale[new_language.locale]
     new_language.application = self
     self.languages << new_language
-    @languages_by_locale[new_language.locale] = new_language
+    self.languages_by_locale[new_language.locale] = new_language
     new_language
   end
 
@@ -131,14 +162,21 @@ class Tml::Application < Tml::Base
   def source(source, locale)
     self.sources ||= {}
     self.sources[source] ||= Tml::Source.new(
-      :application => self,
-      :source => source
+      :application  => self,
+      :source       => source
     ).fetch_translations(locale)
+  end
+
+  def verify_source_path(source_key, source_path)
+    return if Tml.cache.enabled? and not Tml.session.inline_mode?
+    return if extensions.nil? or extensions['sources'].nil?
+    return unless extensions['sources'][source_key].nil?
+    @missing_keys_by_sources ||= {}
+    @missing_keys_by_sources[source_path] ||= {}
   end
 
   def register_missing_key(source_key, tkey)
     return if Tml.cache.enabled? and not Tml.session.inline_mode?
-
     @missing_keys_by_sources ||= {}
     @missing_keys_by_sources[source_key] ||= {}
     @missing_keys_by_sources[source_key][tkey.key] ||= tkey
@@ -148,7 +186,6 @@ class Tml::Application < Tml::Base
   def register_keys(keys)
     params = []
     keys.each do |source_key, keys|
-      next unless keys.values.any?
       source = Tml::Source.new(:source => source_key, :application => self)
       params << {:source => source_key, :keys => keys.values.collect{|tkey| tkey.to_hash(:label, :description, :locale, :level)}}
       source.reset_cache
@@ -246,11 +283,11 @@ class Tml::Application < Tml::Base
   end
 
   def api_client
-    @api_client ||= Tml::Api::Client.new(:application => self)
+    @api_client ||= Tml::Api::Client.new(application: self)
   end
 
   def postoffice
-    @postoffice ||= Tml::Api::PostOffice.new(:application => self)
+    @postoffice ||= Tml::Api::PostOffice.new(application: self)
   end
 
 end

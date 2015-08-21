@@ -123,9 +123,9 @@ class Tml::Language < Tml::Base
   # There are three ways to call the tr method
   #
   # tr(label, description = "", tokens = {}, options = {})
-  # or
+  #   or
   # tr(label, tokens = {}, options = {})
-  # or
+  #   or
   # tr(:label => label, :description => "", :tokens => {}, :options => {})
   ########################################################################################################
 
@@ -142,12 +142,12 @@ class Tml::Language < Tml::Base
       :translations => []
     })
 
-    #Tml.logger.info("Translating " + params[:label] + " from: " + translation_key.locale.inspect + " to " + locale.inspect)
+    # Tml.logger.info("Translating " + params[:label] + " from: " + translation_key.locale.inspect + " to " + locale.inspect)
 
     params[:tokens] ||= {}
     params[:tokens][:viewing_user] ||= Tml.session.current_user
 
-    if Tml.config.disabled? or self.locale == translation_key.locale or application.nil?
+    if Tml.config.disabled? or application.nil?
       return translation_key.substitute_tokens(
         params[:label],
         params[:tokens],
@@ -163,8 +163,10 @@ class Tml::Language < Tml::Base
     end
 
     source_key = current_source(options)
+    source_path = source_path(options).join(Tml.config.source_separator)
 
     source = application.source(source_key, locale)
+    application.verify_source_path(source_key, source_path)
     cached_translations = source.cached_translations(locale, translation_key.key)
 
     if cached_translations
@@ -172,11 +174,25 @@ class Tml::Language < Tml::Base
     else
       params[:options] ||= {}
       params[:options][:pending] = true
-      application.register_missing_key(source_key, translation_key)
+      application.register_missing_key(source_path, translation_key)
     end
 
     translation_key.translate(self, params[:tokens], params[:options]).tml_translated
   end
   alias :tr :translate
+
+  def source_path(options)
+    sp = []
+
+    Tml.session.block_options_queue.each do |opts|
+      next unless hash_value(opts, :source)
+      sp << hash_value(opts, :source)
+    end
+
+    sp = sp.reverse
+    sp.unshift(Tml.session.current_source)
+
+    sp
+  end
 
 end
