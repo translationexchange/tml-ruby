@@ -30,5 +30,5 @@
 #++
 
 module Tml
-  VERSION = '4.4.7'
+  VERSION = '5.0.1'
 end

@@ -34,18 +34,27 @@ require 'faraday'
 
 class Tml::Application < Tml::Base
   attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level, :tools
-  has_many :features, :languages, :featured_locales, :sources, :components, :tokens, :css, :shortcuts, :translations
+  has_many :features, :languages, :featured_locales, :sources, :tokens, :css, :shortcuts, :translations
 
+  # Returns application cache key
   def self.cache_key
     'application'
   end
 
+  # Returns translations cache key
   def self.translations_cache_key(locale)
     "#{locale}/translations"
   end
 
   def fetch
-    data = api_client.get('applications/current/definition', {}, {:cache_key => self.class.cache_key})
+    data = api_client.get(
+      'projects/current/definition',
+      {},
+      {
+        cache_key: self.class.cache_key
+      }
+    )
+
     if data
       update_attributes(data)
     else
@@ -75,8 +84,8 @@ class Tml::Application < Tml::Base
     locale ||= default_locale || Tml.config.default_locale
     @languages_by_locale ||= {}
     @languages_by_locale[locale] ||= api_client.get(
-      "languages/#{locale}",
-      {:definition => true},
+      "languages/#{locale}/definition",
+      {},
       {
         :class => Tml::Language,
         :attributes => {:locale => locale, :application => self},
@@ -127,15 +136,6 @@ class Tml::Application < Tml::Base
     ).fetch_translations(locale)
   end
 
-  def component(key, register = true)
-    key = key.key if key.is_a?(Tml::Component)
-
-    return self.components[key] if self.components[key]
-    return nil unless register
-
-    self.components[key] ||= api_client.post('components/register', {:component => key}, {:class => Tml::Component, :attributes => {:application => self}})
-  end
-
   def register_missing_key(source_key, tkey)
     return if Tml.cache.enabled? and not Tml.session.inline_mode?
 
@@ -167,21 +167,6 @@ class Tml::Application < Tml::Base
     @missing_keys_by_sources = nil
   end
 
-  def featured_languages
-    @featured_languages ||= begin
-      locales = api_client.get('applications/current/featured_locales', {}, {:cache_key => 'featured_locales'})
-      (locales.nil? or locales.empty?) ? [] : languages.select{|l| locales.include?(l.locale)}
-    end
-  rescue
-    []
-  end
- 
-  def translators
-    @translators ||= api_client.get('applications/current/translators', {}, {:class => Tml::Translator, :attributes => {:application => self}})
-  rescue
-    []
-  end
-
   def reset_translation_cache
     self.sources = {}
     self.translations = {}
@@ -195,7 +180,7 @@ class Tml::Application < Tml::Base
       results = Tml.cache.fetch(Tml::Application.translations_cache_key(locale)) do
         data = {}
         unless Tml.cache.read_only?
-          api_client.paginate('applications/current/translations', :per_page => 1000) do |translations|
+          api_client.paginate('projects/current/translations', :per_page => 1000) do |translations|
             data.merge!(translations)
           end
         end

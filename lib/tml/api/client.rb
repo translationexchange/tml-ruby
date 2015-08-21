@@ -31,6 +31,8 @@
 #++
 
 require 'faraday'
+require 'zlib'
+require 'stringio'
 
 class Tml::Api::Client < Tml::Base
   CDN_HOST = 'https://cdn.translationexchange.com'
@@ -172,6 +174,15 @@ class Tml::Api::Client < Tml::Base
     "#{API_PATH}#{path[0] == '/' ? '' : '/'}#{path}"
   end
 
+  def prepare_request(request, path, params)
+    request.options.timeout = 5
+    request.options.open_timeout = 2
+    request.headers['User-Agent']       = "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION}"
+    request.headers['Accept']           = 'application/json'
+    request.headers['Accept-Encoding']  = 'gzip, deflate'
+    request.url(path, params)
+  end
+
   def execute_request(path, params = {}, opts = {})
     response = nil
     error = nil
@@ -187,13 +198,21 @@ class Tml::Api::Client < Tml::Base
     trace_api_call(path, params, opts) do
       begin
         if opts[:method] == :post
-          response = connection.post(path, params)
+          response = connection.post do |request|
+            prepare_request(request, path, params)
+          end
         elsif opts[:method] == :put
-          response = connection.put(path, params)
+          response = connection.put do |request|
+            prepare_request(request, path, params)
+          end
         elsif opts[:method] == :delete
-          response = connection.delete(path, params)
+          response = connection.delete do |request|
+            prepare_request(request, path, params)
+          end
         else
-          response = connection.get(path, params)
+          response = connection.get do |request|
+            prepare_request(request, path, params)
+          end
         end
       rescue Exception => ex
         Tml.logger.error("Failed to execute request: #{ex.message[0..255]}")
@@ -207,11 +226,16 @@ class Tml::Api::Client < Tml::Base
       raise Tml::Exception.new("Error: #{response.body}")
     end
 
-    return if response.body.nil? or response.body == ''
-    return response.body if opts[:raw]
+    compressed_data = response.body
+    return if compressed_data.nil? or compressed_data == ''
+
+    data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
+    Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+
+    return data if opts[:raw]
 
     begin
-      data = JSON.parse(response.body)
+      data = JSON.parse(data)
     rescue Exception => ex
       raise Tml::Exception.new("Failed to parse response: #{ex.message[0..255]}")
     end

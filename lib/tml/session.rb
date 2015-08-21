@@ -41,7 +41,7 @@ module Tml
                   :current_source, :current_component, :block_options, :cookie_params, :access_token, :tools_enabled
 
     def cookie_name
-      "trex_#{Tml.config.access_token[0..19]}_translationexchange"
+      "trex_#{Tml.config.application[:key]}"
     end
 
     def init(opts = {})

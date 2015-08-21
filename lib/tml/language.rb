@@ -35,16 +35,25 @@ class Tml::Language < Tml::Base
   attributes  :locale, :name, :english_name, :native_name, :right_to_left, :flag_url
   has_many    :contexts, :cases
 
+  # Returns language cache key
   def self.cache_key(locale)
     File.join(locale, 'language')
   end
 
+  # Loads language definition from the service
   def fetch
-    update_attributes(application.api_client.get("language/#{locale}", {}, {:cache_key => self.class.cache_key(locale)}))
+    update_attributes(application.api_client.get(
+      "language/#{locale}/definition",
+      {},
+      {
+          cache_key: self.class.cache_key(locale)
+      }
+    ))
   rescue Tml::Exception => ex
     Tml.logger.error("Failed to load language: #{ex}")
     self
   end
+
 
   def update_attributes(attrs)
     super
