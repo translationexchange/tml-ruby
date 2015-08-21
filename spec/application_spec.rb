@@ -7,7 +7,7 @@ describe Tml::Application do
     it "sets class attributes" do
       expect(Tml::Application.attributes).to eq([:host, :id, :key, :access_token,
                                                   :name, :description, :threshold, :default_locale, :default_level, :tools,
-                                                  :features, :languages, :featured_locales, :sources, :components, :tokens,
+                                                  :features, :languages, :featured_locales, :sources, :tokens,
                                                   :css, :shortcuts, :translations])
     end
   end
