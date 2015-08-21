@@ -98,7 +98,8 @@
         "awards":true,
         "admin_translations":true,
         "open_registration":false,
-        "language_flags":true
+        "language_flags":true,
+        "lock_original_content":true
     },
     "tokens":{
         "data":{

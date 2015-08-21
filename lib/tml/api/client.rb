@@ -195,9 +195,11 @@ class Tml::Api::Client < Tml::Base
     response = nil
     error = nil
 
+    token = Tml.config.application ? Tml.config.application[:token] : ''
+
     # oauth path is separate from versioned APIs
     path = prepare_api_path(path)
-    params = params.merge(:access_token => Tml.config.access_token) unless path.index('oauth')
+    params = params.merge(:access_token => token) unless path.index('oauth')
 
     if opts[:method] == :post
       params = params.merge(:api_key => application.key)
