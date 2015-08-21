@@ -66,6 +66,10 @@ describe Tml::TranslationKey do
 
       tkey = Tml::TranslationKey.new(:label => "You have [link][bold: {count}] messages[/link]", :application => @app)
       expect(tkey.substitute_tokens("You have [link][bold: {count}] messages[/link]", {:count => 5, :link => {:href => "www.google.com"}}, @english)).to eq("You have <a href='www.google.com'><strong>5</strong> messages</a>")
+
+      user = stub_object({:first_name => "Tom", :last_name => "Anderson", :gender => "Male", :to_s => "Tom Anderson"})
+      tkey = Tml::TranslationKey.new(:label => "Your name is {user.first_name}", :application => @app)
+      expect(tkey.substitute_tokens("Your name is {user.first_name}", {:user => user}, @english)).to eq("Your name is Tom")
     end
 
     context "labels with numeric rules" do

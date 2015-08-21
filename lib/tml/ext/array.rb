@@ -49,7 +49,7 @@ class Array
   end
 
   # translates and joins all elements
-  def translated_and_join(separator = '', description = '', options = {})
+  def translate_and_join(separator = ', ', description = '', options = {})
     self.translate(description, options).join(separator).tml_translated
   end
 

@@ -39,19 +39,20 @@ class Tml::Generators::File < Tml::Generators::Base
 
   def execute
     if cache_version == '0'
-      log("No releases have been generated yet. Please visit your Dashboard and publish translations.")
+      log('No releases have been generated yet. Please visit your Dashboard and publish translations.')
     else
       log("Current cache version: #{cache_version}")
 
       archive_name = "#{cache_version}.tar.gz"
       path = "#{cache_path}/#{archive_name}"
-      url = "#{api_client.cdn_host}/#{Tml.config.access_token}/#{archive_name}"
+      url = "#{api_client.cdn_host}/#{Tml.config.application[:key]}/#{archive_name}"
+
       log("Downloading cache file: #{url}")
       open(path, 'wb') do |file|
         file << open(url).read
       end
-      log('Extracting cache file...')
 
+      log('Extracting cache file...')
       version_path = "#{cache_path}/#{cache_version}"
       untar(ungzip(File.new(path)), version_path)
       log("Cache has been stored in #{version_path}")

@@ -151,13 +151,13 @@ module Tml
     def strip_extensions(data)
       if data.is_a?(Hash)
         data = data.dup
-        data['extensions'] = nil
+        data.delete('extensions')
         return data
       end
 
       if data.is_a?(String) and data.match(/^\{/)
         data = JSON.parse(data)
-        data['extensions'] = nil
+        data.delete('extensions')
         data = data.to_json
       end
 

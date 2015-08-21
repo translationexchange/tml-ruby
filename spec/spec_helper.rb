@@ -2,6 +2,7 @@
 
 require 'rspec'
 require 'json'
+require 'pp'
 
 require 'simplecov'
 require 'coveralls'

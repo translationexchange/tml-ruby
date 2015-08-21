@@ -51,6 +51,28 @@ describe Tml::LanguageCaseRule do
 
       expect(@rule.apply('4')).to eq("4th")
       expect(@rule.apply('15')).to eq("15th")
+
+      @app = init_application
+      @english = @app.language('en')
+
+      @lcase = Tml::LanguageCase.new(
+          :language     => @english,
+          :keyword      => "pos",
+          :latin_name   => "Sample",
+          :native_name  => "Sample",
+          :description  => "Sample",
+          :application  => "phrase"
+      )
+
+      @rule = Tml::LanguageCaseRule.new(
+          :language_case  => @lcase,
+          :conditions     => "(= 'male' @gender))",
+          :operations     => "(quote 'male')"
+      )
+
+      expect(@rule.gender_variables(nil)).to eq({'@gender' => 'unknown'})
+      expect(@rule.gender_variables({:gender => 'male'})).to eq({'@gender' => 'male'})
+
     end
   end
 

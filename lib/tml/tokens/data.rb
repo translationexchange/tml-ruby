@@ -333,7 +333,7 @@ module Tml
 
         unless Tml.session.block_options[:skip_html_escaping]
           if options[:safe] == false
-            value = ERB::Util.html_escape(value)
+            value = CGI.escapeHTML(value)
           end
         end
 

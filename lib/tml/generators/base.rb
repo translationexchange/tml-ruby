@@ -81,7 +81,7 @@ class Tml::Generators::Base
   end
 
   def application
-    @application ||= api_client.get('applications/current', {:definition => true})
+    @application ||= api_client.get('projects/current/definition', {})
   end
 
   def languages
