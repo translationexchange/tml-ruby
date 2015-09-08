@@ -163,10 +163,18 @@ class Tml::Language < Tml::Base
     end
 
     source_key = current_source(options)
-    source_path = source_path(options).join(Tml.config.source_separator)
+    current_source_path = source_path
+
+    # Dynamic sources are never registered under the parent source
+    if hash_value(Tml.session.block_options, :dynamic)
+      current_source_path = source_key
+    else
+      application.verify_source_path(source_key, current_source_path)
+    end
+
+    # Tml.logger.debug("#{params[:label]}, #{source_key}")
 
     source = application.source(source_key, locale)
-    application.verify_source_path(source_key, source_path)
     cached_translations = source.cached_translations(locale, translation_key.key)
 
     if cached_translations
@@ -174,14 +182,14 @@ class Tml::Language < Tml::Base
     else
       params[:options] ||= {}
       params[:options][:pending] = true
-      application.register_missing_key(source_path, translation_key)
+      application.register_missing_key(current_source_path, translation_key)
     end
 
     translation_key.translate(self, params[:tokens], params[:options]).tml_translated
   end
   alias :tr :translate
 
-  def source_path(options)
+  def source_path
     sp = []
 
     Tml.session.block_options_queue.each do |opts|
@@ -192,7 +200,7 @@ class Tml::Language < Tml::Base
     sp = sp.reverse
     sp.unshift(Tml.session.current_source)
 
-    sp
+    sp.join(Tml.config.source_separator)
   end
 
 end
