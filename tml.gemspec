@@ -35,18 +35,18 @@ $:.push File.expand_path('../lib', __FILE__)
 require 'tml/version'
 
 # Describe your gem and declare its dependencies:
-Gem::Specification.new do |s|
-  s.name        = 'tml'
-  s.version     = Tml::VERSION
-  s.authors     = ['Michael Berkovich']
-  s.email       = %w(michael@translationexchange.com)
-  s.homepage    = 'https://github.com/translationexchange/tml-ruby'
-  s.summary     = 'Tml Core Classes'
-  s.description = 'Tml core classes that can be used by any Ruby framework'
+Gem::Specification.new do |gem|
+  gem.name        = 'tml'
+  gem.version     = Tml::VERSION
+  gem.authors     = ['Michael Berkovich']
+  gem.email       = %w(michael@translationexchange.com)
+  gem.homepage    = 'https://github.com/translationexchange/tml-ruby'
+  gem.summary     = 'Tml Core Classes'
+  gem.description = 'Tml core classes that can be used by any Ruby framework'
 
-  s.files = Dir['{lib,config}/**/*'] + %w(LICENSE Rakefile README.md)
-  s.licenses = 'MIT-LICENSE'
+  gem.files       = Dir['{lib,config}/**/*'] + %w(LICENSE Rakefile README.md)
+  gem.licenses    = 'MIT-LICENSE'
 
-  s.add_dependency 'faraday', '~> 0.8'
-  s.add_dependency 'nokogiri', '~> 1.5'
+  gem.add_dependency 'faraday', '~> 0.8'
+  gem.add_dependency 'nokogiri', '~> 1.5'
 end
