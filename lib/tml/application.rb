@@ -46,6 +46,7 @@ class Tml::Application < Tml::Base
     "#{locale}/translations"
   end
 
+  # Fetches application definition from the service
   def fetch
     data = api_client.get('projects/current/definition',{
       locale: Tml.session.current_locale,
@@ -66,6 +67,7 @@ class Tml::Application < Tml::Base
     self
   end
 
+  # Updates application attributes
   def update_attributes(attrs)
     super
 
@@ -79,6 +81,7 @@ class Tml::Application < Tml::Base
     self
   end
 
+  # Loads application extensions, if any
   def load_extensions(extensions)
     return if extensions.nil?
     source_locale = default_locale
@@ -111,8 +114,9 @@ class Tml::Application < Tml::Base
     end
   end
 
+  # Returns language by locale
   def language(locale = nil)
-    locale = nil if locale.strip == ''
+    locale = nil if locale and locale.strip == ''
 
     locale ||= default_locale || Tml.config.default_locale
     locale = locale.to_s
@@ -130,14 +134,17 @@ class Tml::Application < Tml::Base
     self.languages_by_locale[locale] = Tml.config.default_language
   end
 
+  # Normalizes and returns current language
+  # TODO: verify usage
   def current_language(locale)
-    locale = locale.gsub('_', '-')
+    locale = locale.gsub('_', '-') if locale
     lang = language(locale)
     lang ||= language(locale.split('-').first) if locale.index('-')
     lang ||= Tml.config.default_language
     lang
   end
 
+  # Adds a language to the application
   def add_language(new_language)
     self.languages_by_locale ||= {}
     return self.languages_by_locale[new_language.locale] if self.languages_by_locale[new_language.locale]
@@ -147,26 +154,31 @@ class Tml::Application < Tml::Base
     new_language
   end
 
+  # Returns a list of application supported locales
   def locales
     @locales ||= languages.collect{|lang| lang.locale}
   end
 
+  # Returns tools data
   def tools
     @attributes[:tools] || {}
   end
 
+  # Returns asset url
   def url_for(path)
     "#{tools['assets']}#{path}"
   end
 
-  def source(source, locale)
+  # Returns source by key
+  def source(key, locale)
     self.sources ||= {}
-    self.sources[source] ||= Tml::Source.new(
+    self.sources[key] ||= Tml::Source.new(
       :application  => self,
-      :source       => source
+      :source       => key
     ).fetch_translations(locale)
   end
 
+  # Verifies current source path
   def verify_source_path(source_key, source_path)
     return if Tml.cache.enabled? and not Tml.session.inline_mode?
     return if extensions.nil? or extensions['sources'].nil?
