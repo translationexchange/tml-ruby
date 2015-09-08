@@ -55,7 +55,7 @@ module Tml
       end
 
       def parse_elements
-        name_without_parens = @full_name[1..-2]
+        name_without_parens = @full_name.gsub(/^%/, '')[1..-2]
         name_without_case_keys = name_without_parens.split('::').first.strip
 
         @short_name = name_without_parens.split(':').first.strip

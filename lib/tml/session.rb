@@ -73,8 +73,7 @@ module Tml
     def preferred_locale(locales)
       locales = locales.is_a?(String) ? locales.split(',') : locales
       locales.each do |locale|
-        next unless application.locales.include?(locale)
-        return locale
+        return locale if application.locales.include?(locale)
       end
       application.default_locale
     end

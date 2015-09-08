@@ -93,7 +93,8 @@ class Tml::Decorators::Html < Tml::Decorators::Base
       attrs << "#{key}=\"#{value.to_s.gsub('"', "\"")}\""
     end
 
-    element = 'span'
+    element = 'tml:label'
+    element = 'span' if options[:use_span]
     element = 'div' if options[:use_div]
 
     html = "<#{element} #{attrs.join(' ')}>"

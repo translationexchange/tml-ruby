@@ -61,7 +61,7 @@ class Tml::Tokens::Transform < Tml::Tokens::Data
   end
 
   def parse_elements
-    name_without_parens = @full_name[1..-2]
+    name_without_parens = @full_name.gsub(/^%/, '')[1..-2]
     name_without_pipes = name_without_parens.split('|').first.strip
     name_without_case_keys = name_without_pipes.split('::').first.strip
 
@@ -69,7 +69,7 @@ class Tml::Tokens::Transform < Tml::Tokens::Data
     @case_keys = name_without_pipes.scan(/(::\w+)/).flatten.uniq.collect{|c| c.gsub('::', '')}
     @context_keys = name_without_case_keys.scan(/(:\w+)/).flatten.uniq.collect{|c| c.gsub(':', '')}
 
-    @pipe_separator = (full_name.index("||") ? "||" : "|")
+    @pipe_separator = (full_name.index('||') ? '||' : '|')
     @piped_params = name_without_parens.split(pipe_separator).last.split(",").collect{|param| param.strip}
   end
 

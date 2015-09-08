@@ -185,7 +185,7 @@ class Tml::Api::Client < Tml::Base
   def prepare_request(request, path, params)
     request.options.timeout = 5
     request.options.open_timeout = 2
-    request.headers['User-Agent']       = "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION}"
+    request.headers['User-Agent']       = "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION})"
     request.headers['Accept']           = 'application/json'
     request.headers['Accept-Encoding']  = 'gzip, deflate'
     request.url(path, params)
