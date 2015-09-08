@@ -36,10 +36,6 @@ module Tml
   module Tokenizers
     class Dom
 
-      HTML_SPECIAL_CHAR_REGEX = /(&[^;]*;)/
-      INDEPENDENT_NUMBER_REGEX = /^(\d+)$|^(\d+[.,;\s])|(\s\d+)$|(\s\d+[,;\s])/
-      VERBOSE_DATE_REGEX = /(((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)|(January|February|March|April|May|June|July|August|September|October|November|December))\\s\\d+(,\\s\\d+)*(,*\\sat\\s\\d+:\\d+(\\sUTC))*)/
-
       attr_accessor :context, :tokens, :options
 
       def initialize(context = {}, options = {})
@@ -54,8 +50,7 @@ module Tml
 
       def translate_tree(node)
         if non_translatable_node?(node)
-          return node.children.first.inner_text if node.children.count == 1
-          return ''
+          return node.inner_html
         end
 
         return translate_tml(node.inner_text) if node.type == 3
@@ -222,30 +217,55 @@ module Tml
         value.gsub(/^\s+/, '')
       end
 
-      def replace_special_characters(text)
-        return text if option('data_tokens.special')
-
-        matches = text.match(HTML_SPECIAL_CHAR_REGEX)
-        matches.each do  |match|
-          token = match[1, - 2]
-          self.context[token] = match
-          text = text.gsub(match, "{#{token}}")
+      def generate_data_tokens(text)
+        if option('data_tokens.special.enabled')
+          matches = text.scan(option('data_tokens.special.regex'))
+          matches.each do  |match|
+            token = match[1, - 2]
+            self.context[token] = match
+            text = text.gsub(match, "{#{token}}")
+          end
         end
 
-        text
-      end
+        if option('data_tokens.date.enabled')
+          token_name = option('data_tokens.date.name')
+          formats = option('data_tokens.date.formats')
+          formats.each do |format|
+            regex = format[0]
+            # date_format = format[1]
 
-      def generate_data_tokens(text)
-        return text unless option('data_tokens.numeric')
+            matches = text.scan(regex)
+            if matches
+              matches.each do |match|
+                next if match.first.nil? or match.first == ''
+                date = match.first
+                token = self.contextualize(token_name, date)
+                replacement = "{#{token}}"
+                text = text.gsub(date, replacement)
+              end
+            end
+          end
+        end
 
-        matches = text.match(INDEPENDENT_NUMBER_REGEX) || []
-        token_name = option('data_tokens.numeric_name')
+        rules = option('data_tokens.rules')
+        if rules
+          rules.each do |rule|
+            if rule[:enabled]
+              matches = text.scan(rule[:regex])
 
-        matches.each do |match|
-          value = match.gsub(/[.,;\s]/, '')
-          token = contextualize(token_name, value.to_i)
-          replacement = match.replace(value, "{#{token}}")
-          text = text.gsub(match, match.gsub(value, replacement))
+              if matches
+                matches.each do |match|
+                  next if match.first.nil? or match.first == ''
+                  value = match.first.strip
+
+                  unless value == ''
+                    token = contextualize(rule[:name], value.gsub(/[.,;\s]/, '').to_i)
+                    text = text.gsub(value, value.gsub(value, "{#{token}}"))
+                  end
+                end
+              end
+            end
+          end
         end
 
         text

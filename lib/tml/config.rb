@@ -114,25 +114,44 @@ module Tml
         debug_format: '{{{{$0}}}}',
         split_sentences: false,
         nodes: {
-            ignored:    [],
-            scripts:    %w(style script),
-            inline:     %w(a span i b img strong s em u sub sup),
-            short:      %w(i b),
-            splitters:  %w(br hr)
+          ignored:    %w(),
+          scripts:    %w(style script code pre),
+          inline:     %w(a span i b img strong s em u sub sup),
+          short:      %w(i b),
+          splitters:  %w(br hr)
         },
         attributes: {
-            labels:     %w(title alt)
+          labels:     %w(title alt)
         },
         name_mapping: {
-            b:    'bold',
-            i:    'italic',
-            a:    'link',
-            img:  'picture'
+          b:    'bold',
+          i:    'italic',
+          a:    'link',
+          img:  'picture'
         },
         data_tokens: {
-            special: false,
-            numeric: false,
-            numeric_name: 'num'
+          special: {
+            enable: true,
+            regex: /(&[^;]*;)/
+          },
+          date: {
+            enabled: true,
+            formats: [
+              [/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+,\s+\d+)/, "{month} {day}, {year}"],
+              [/((January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+)/, "{month} {day}, {year}"],
+              [/(\d+\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec),\s+\d+)/, "{day} {month}, {year}"],
+              [/(\d+\s+(January|February|March|April|May|June|July|August|September|October|November|December),\s+\d+)/, "{day} {month}, {year}"]
+            ],
+            name: 'date'
+          },
+          rules: [
+            {enabled: true, name: 'time',     regex: /(\d{1,2}:\d{1,2}\s+([A-Z]{2,3}|am|pm|AM|PM)?)/},
+            {enabled: true, name: 'phone',    regex: /((\d{1}-)?\d{3}-\d{3}-\d{4}|\d?\(\d{3}\)\s*\d{3}-\d{4}|(\d.)?\d{3}.\d{3}.\d{4})/},
+            {enabled: true, name: 'email',    regex: /([-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|io|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?)/},
+            {enabled: true, name: 'price',    regex: /(\$\d*(,\d*)*(\.\d*)?)/},
+            {enabled: true, name: 'fraction', regex: /(\d+\/\d+)/},
+            {enabled: true, name: 'num',      regex: /(\b\d*(,\d*)*(\.\d*)?%?\b)/}
+          ]
         }
       }
 

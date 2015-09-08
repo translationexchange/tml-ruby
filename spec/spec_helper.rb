@@ -30,8 +30,12 @@ def fixtures_root
   File.join(File.dirname(__FILE__), 'fixtures')
 end
 
+def load_data(file_path)
+  File.read("#{fixtures_root}/#{file_path}")
+end
+
 def load_json(file_path)
-  JSON.parse(File.read("#{fixtures_root}/#{file_path}"))
+  JSON.parse(load_data(file_path))
 end
 
 def load_translation_key_from_hash(app, hash)

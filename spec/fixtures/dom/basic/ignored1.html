@@ -1,0 +1,22 @@
+<p>
+    This shortcode is a simpler version of the [tml:trh]. It can deal with simple strings that do not contain any
+    HTML elements. You can use standard TML inside the shortcode.
+    This could be especially useful if you have to deal with a lot of dynamic data.
+</p>
+
+<pre><code class="language-php">
+    [tml:tr count="5"] We had [bold: {count || visitor}] on our site today. [/tml:tr]
+</code></pre>
+
+<pre><code class="language-php">
+    [tml:tr user1="Thomas" user2="Alex" count="750"]
+    Today's winners are [bold: {user1}] and [bold: {user2}] who managed to score
+    over [bold: {count || point}] each.
+    [/tml:tr]
+</code></pre>
+
+<p>
+    Blocks are used to group translation keys together. A group of translation keys is called a source.
+    When you surround an entire section of an article with a block, everything within the block will be associated with a source.
+    You can make an entire page be a source or you can have multiple sources on the same page.
+</p>
