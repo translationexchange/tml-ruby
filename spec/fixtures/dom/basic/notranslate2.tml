@@ -1,0 +1,5 @@
+<p>{{{This shortcode is a simpler version of the [tml:trh]. It can deal with simple strings that do not contain any HTML elements. You can use standard TML inside the shortcode. This could be especially useful if you have to deal with a lot of dynamic data.}}}</p>
+
+<div notranslate='true'>
+    [tml:tr count="5"] We had [bold: {count || visitor}] on our site today. [/tml:tr]
+</div>

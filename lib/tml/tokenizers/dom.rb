@@ -85,10 +85,19 @@ module Tml
         html
       end
 
+      def no_translate_node?(node)
+        return unless node && node.type == 1 && node.attributes
+        node.attributes.each do |name, attribute|
+          return true if name == 'notranslate' or attribute.value.index('notranslate')
+        end
+        false
+      end
+
       def non_translatable_node?(node)
         return false unless node
         return true if node.type == 1 && (option('nodes.scripts') || []).index(node.name.downcase)
         return true if node.type == 1 && node.children.length === 0 && node.inner_text == ''
+        return true if no_translate_node?(node)
         false
       end
 
