@@ -84,24 +84,21 @@ module Tml
       yaml['defaults'].rmerge(yaml[env] || {})
     end
 
-    def self.decode(data, secret = nil)
-      payload = URI::decode(data)
+    def self.decode(payload, secret = nil)
+      # payload = URI::decode(payload)
       payload = Base64.decode64(payload)
       data = JSON.parse(payload)
-
       # TODO: Verify signature
-
       data
     rescue Exception => ex
       {}
     end
 
     def self.encode(params, secret = nil)
-
       # TODO: Add signature
-
       payload = Base64.encode64(params.to_json)
-      URI::encode(payload)
+      # URI::encode(payload)
+      payload
     rescue Exception => ex
       ''
     end
