@@ -56,6 +56,6 @@ class Tml::Tokens::Method < Tml::Tokens::Data
     object = Tml::Utils.hash_value(context, object_name)
     return label unless object
     object_value = sanitize(object.send(object_method_name), object, language, options.merge(:safe => false))
-    label.gsub(full_name, object_value)
+    label.gsub(full_name, decorate(object_value, options))
   end
 end

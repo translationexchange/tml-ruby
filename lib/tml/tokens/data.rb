@@ -160,14 +160,14 @@ module Tml
 
         values = objects.collect do |obj|
           if method.is_a?(String)
-            method.gsub("{$0}", sanitize(obj.to_s, obj, language, options.merge(:safe => false)))
+            element = method.gsub("{$0}", sanitize(obj.to_s, obj, language, options.merge(:safe => false)))
           elsif method.is_a?(Symbol)
             if obj.is_a?(Hash)
               value = Tml::Utils.hash_value(obj, method)
             else
               value = obj.send(method)
             end
-            sanitize(value, obj, language, options.merge(:safe => false))
+            element = sanitize(value, obj, language, options.merge(:safe => false))
           elsif method.is_a?(Hash)
             attr = Tml::Utils.hash_value(method, :attribute) || Tml::Utils.hash_value(method, :property)
             if obj.is_a?(Hash)
@@ -178,13 +178,15 @@ module Tml
 
             hash_value = Tml::Utils.hash_value(method, :value)
             if hash_value
-              hash_value.gsub("{$0}", sanitize(value, obj, language, options.merge(:safe => false)))
+              element = hash_value.gsub("{$0}", sanitize(value, obj, language, options.merge(:safe => false)))
             else
-              sanitize(value, obj, language, options.merge(:safe => false))
+              element = sanitize(value, obj, language, options.merge(:safe => false))
             end
           elsif method.is_a?(Proc)
-            sanitize(method.call(obj), obj, language, options.merge(:safe => true))
+            element = sanitize(method.call(obj), obj, language, options.merge(:safe => true))
           end
+
+          Tml::Decorators::Base.decorator.decorate_element(self, element, options)
         end
 
         return values.first if objects.size == 1
@@ -384,11 +386,19 @@ module Tml
         return label.gsub(full_name, '') if object.nil?
 
         value = token_value(object, language, options)
-        label.gsub(full_name, value)
+        label.gsub(full_name, decorate(value, options))
+      end
+
+      def decorate(value, options = {})
+        Tml::Decorators::Base.decorator.decorate_token(self, value, options)
       end
 
       def sanitized_name
         name(:parens => true)
+      end
+
+      def decoation_name
+        self.class.name.split('::').last.downcase
       end
 
       def to_s

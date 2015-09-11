@@ -35,9 +35,10 @@ class Tml::Decorators::Html < Tml::Decorators::Base
   def decorate(translated_label, translation_language, target_language, translation_key, options = {})
     #Tml.logger.info("Decorating #{translated_label} of #{translation_language.locale} to #{target_language.locale}")
 
+    return translated_label unless enabled?(options)
+
     # if translation key language is the same as target language - skip decorations
-    if options[:skip_decorations] or not inline_mode? or
-       (translation_key.application.feature_enabled?(:lock_original_content) and translation_key.language == target_language)
+    if translation_key.application.feature_enabled?(:lock_original_content) and translation_key.language == target_language
       return translated_label
     end
 
@@ -59,9 +60,7 @@ class Tml::Decorators::Html < Tml::Decorators::Base
       classes << 'tml_fallback'
     end
 
-    element = 'tml:label'
-    element = 'span' if options[:use_span]
-    element = 'div' if options[:use_div]
+    element = decoration_element('tml:label', options)
 
     html = "<#{element} class='#{classes.join(' ')}' data-translation_key='#{translation_key.key}' data-target_locale='#{target_language.locale}'>"
     html << translated_label
@@ -70,8 +69,7 @@ class Tml::Decorators::Html < Tml::Decorators::Base
   end
 
   def decorate_language_case(language_case, rule, original, transformed, options = {})
-    return transformed if options[:skip_decorations] or language_case.language.default?
-    return transformed unless inline_mode?
+    return transformed unless enabled?(options)
 
     data = {
       'keyword'       => language_case.keyword,
@@ -93,12 +91,37 @@ class Tml::Decorators::Html < Tml::Decorators::Base
       attrs << "#{key}=\"#{value.to_s.gsub('"', "\"")}\""
     end
 
-    element = 'tml:label'
-    element = 'span' if options[:use_span]
-    element = 'div' if options[:use_div]
+    element = decoration_element('tml:case', options)
 
     html = "<#{element} #{attrs.join(' ')}>"
     html << transformed
+    html << "</#{element}>"
+    html
+  end
+
+  def decorate_token(token, value, options = {})
+    return value unless enabled?(options)
+
+    element = decoration_element('tml:token', options)
+
+    classes = ["tml_token_#{token.decoation_name}"]
+
+    html = "<#{element} class='#{classes.join(' ')}' data-name='#{token.name}'"
+    html << " data-context='#{token.context_keys.join(',')}'" if token.context_keys.any?
+    html << " data-case='#{token.case_keys.join(',')}'" if token.case_keys.any?
+    html << '>'
+    html << value
+    html << "</#{element}>"
+    html
+  end
+
+  def decorate_element(token, value, options = {})
+    return value unless enabled?(options)
+
+    element = decoration_element('tml:element', options)
+
+    html = "<#{element}>"
+    html << value
     html << "</#{element}>"
     html
   end

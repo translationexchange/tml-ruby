@@ -41,12 +41,31 @@ class Tml::Decorators::Base < Tml::Base
     raise Tml::Exception.new('Must be implemented by the extending class')
   end
 
+  def decorate_language_case(language_case, rule, original, transformed, options = {})
+    raise Tml::Exception.new('Must be implemented by the extending class')
+  end
+
+  def decorate_token(token, value, options = {})
+    raise Tml::Exception.new('Must be implemented by the extending class')
+  end
+
+  def decorate_element(token, value, options = {})
+    raise Tml::Exception.new('Must be implemented by the extending class')
+  end
+
   def inline_mode?
     Tml.session.current_translator and Tml.session.current_translator.inline?
   end
 
-  def decorate_language_case(language_case, rule, original, transformed, options = {})
-    raise Tml::Exception.new('Must be implemented by the extending class')
+  def enabled?(options)
+    return false if options[:skip_decorations]
+    inline_mode?
   end
-  
+
+  def decoration_element(default, options)
+    return 'span' if options[:use_span]
+    return 'div' if options[:use_div]
+    default
+  end
+
 end
