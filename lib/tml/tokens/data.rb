@@ -397,7 +397,7 @@ module Tml
         name(:parens => true)
       end
 
-      def decoation_name
+      def decoration_name
         self.class.name.split('::').last.downcase
       end
 

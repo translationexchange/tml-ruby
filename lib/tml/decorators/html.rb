@@ -104,7 +104,7 @@ class Tml::Decorators::Html < Tml::Decorators::Base
 
     element = decoration_element('tml:token', options)
 
-    classes = ["tml_token_#{token.decoation_name}"]
+    classes = ['tml_token', "tml_token_#{token.decoration_name}"]
 
     html = "<#{element} class='#{classes.join(' ')}' data-name='#{token.name}'"
     html << " data-context='#{token.context_keys.join(',')}'" if token.context_keys.any?
