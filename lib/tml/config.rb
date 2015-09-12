@@ -102,7 +102,7 @@ module Tml
 
       @agent = {
         enabled: true,
-        type:    'tools'
+        type:    'agent'
       }
 
       # if running from IRB, make it default to TRUE
