@@ -226,7 +226,7 @@ describe Tml::Language do
           Tml.config.format = :html
           Tml.session.current_translator = Tml::Translator.new
           Tml.session.current_translator.inline = true
-          expect(@english.translate('You like {user::pos} post.', :user => {:object => male, :attribute => :name})).to eq("You like <tml:token class='tml_token_data' data-name='user' data-case='pos'>><tml:case class=\"tml_language_case\" data-locale=\"en\" data-rule=\"eyJrZXl3b3JkIjoicG9zIiwibGFuZ3VhZ2VfbmFtZSI6IkVuZ2xpc2ggKFVTKSIsImxhdGluX25hbWUiOiJQb3NzZXNzaXZlIiwibmF0aXZlX25hbWUiOm51bGwsImNvbmRpdGlvbnMiOiIodHJ1ZSkiLCJvcGVyYXRpb25zIjoiKGFwcGVuZCBcIidzXCIgQHZhbHVlKSIsIm9yaWdpbmFsIjoiTWljaGFlbCIsInRyYW5zZm9ybWVkIjoiTWljaGFlbCdzIn0%3D\">Michael's</tml:case></tml:token> post.")
+          expect(@english.translate('You like {user::pos} post.', :user => {:object => male, :attribute => :name})).to eq("You like <tml:token class='tml_token_data' data-name='user' data-case='pos'><tml:case class=\"tml_language_case\" data-locale=\"en\" data-rule=\"eyJrZXl3b3JkIjoicG9zIiwibGFuZ3VhZ2VfbmFtZSI6IkVuZ2xpc2ggKFVTKSIsImxhdGluX25hbWUiOiJQb3NzZXNzaXZlIiwibmF0aXZlX25hbWUiOm51bGwsImNvbmRpdGlvbnMiOiIodHJ1ZSkiLCJvcGVyYXRpb25zIjoiKGFwcGVuZCBcIidzXCIgQHZhbHVlKSIsIm9yaWdpbmFsIjoiTWljaGFlbCIsInRyYW5zZm9ybWVkIjoiTWljaGFlbCdzIn0%3D\">Michael's</tml:case></tml:token> post.")
           Tml.session.current_translator.inline = false
           Tml.config.format = :plain
 
