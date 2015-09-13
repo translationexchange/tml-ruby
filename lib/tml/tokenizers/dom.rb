@@ -259,18 +259,17 @@ module Tml
         rules = option('data_tokens.rules')
         if rules
           rules.each do |rule|
-            if rule[:enabled]
-              matches = text.scan(rule[:regex])
+            next unless rule[:enabled]
+            matches = text.scan(rule[:regex])
 
-              if matches
-                matches.each do |match|
-                  next if match.first.nil? or match.first == ''
-                  value = match.first.strip
+            if matches
+              matches.each do |match|
+                next if match.first.nil? or match.first == ''
+                value = match.first.strip
 
-                  unless value == ''
-                    token = contextualize(rule[:name], value.gsub(/[.,;\s]/, '').to_i)
-                    text = text.gsub(value, value.gsub(value, "{#{token}}"))
-                  end
+                unless value == ''
+                  token = contextualize(rule[:name], value.gsub(/[.,;\s]/, '').to_i)
+                  text = text.gsub(value, value.gsub(value, "{#{token}}"))
                 end
               end
             end

@@ -136,7 +136,7 @@ module Tml
         },
         data_tokens: {
           special: {
-            enable: true,
+            enabled: true,
             regex: /(&[^;]*;)/
           },
           date: {
