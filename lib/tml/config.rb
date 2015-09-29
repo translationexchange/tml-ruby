@@ -80,7 +80,7 @@ module Tml
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
-    attr_accessor :invalidator
+    attr_accessor :invalidator, :agent
 
     # Used for IRB only
     attr_accessor :submit_missing_keys_realtime
@@ -98,6 +98,11 @@ module Tml
         method:     'current_locale',
         subdomain:  false,
         extension:  false
+      }
+
+      @agent = {
+        enabled: true,
+        type:    'agent'
       }
 
       # if running from IRB, make it default to TRUE
@@ -131,7 +136,7 @@ module Tml
         },
         data_tokens: {
           special: {
-            enable: true,
+            enabled: true,
             regex: /(&[^;]*;)/
           },
           date: {

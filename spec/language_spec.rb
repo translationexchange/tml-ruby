@@ -203,6 +203,13 @@ describe Tml::Language do
 
           expect(@russian.translate('{user} updated {user| his, her} profile.', :user => {:object => female, :attribute => :name})).to eq("Anna обновила свой профиль.")
           expect(@russian.translate('{user} updated {user| his, her} profile.', :user => {:object => male, :attribute => :name})).to eq("Michael обновил свой профиль.")
+
+          Tml.config.format = :html
+          Tml.session.current_translator = Tml::Translator.new
+          Tml.session.current_translator.inline = true
+          expect(@russian.translate('{user} updated {user| his, her} profile.', :user => {:object => male, :attribute => :name})).to eq("<tml:label class='tml_translatable tml_translated' data-translation_key='d42ca2ae9e2d198bc3aec92925922826' data-target_locale='ru'><tml:token class='tml_token tml_token_transform' data-name='user'>Michael</tml:token> обновил свой профиль.</tml:label>")
+          Tml.session.current_translator.inline = false
+          Tml.config.format = :plain
         end
       end
     end
@@ -215,6 +222,13 @@ describe Tml::Language do
           male = {:gender => :male, :name => "Michael"}
 
           expect(@english.translate('You like {user::pos} post.', :user => {:object => male, :attribute => :name})).to eq("You like Michael's post.")
+
+          Tml.config.format = :html
+          Tml.session.current_translator = Tml::Translator.new
+          Tml.session.current_translator.inline = true
+          expect(@english.translate('You like {user::pos} post.', :user => {:object => male, :attribute => :name})).to eq("You like <tml:token class='tml_token tml_token_data' data-name='user' data-case='pos'><tml:case class=\"tml_language_case\" data-locale=\"en\" data-rule=\"eyJrZXl3b3JkIjoicG9zIiwibGFuZ3VhZ2VfbmFtZSI6IkVuZ2xpc2ggKFVTKSIsImxhdGluX25hbWUiOiJQb3NzZXNzaXZlIiwibmF0aXZlX25hbWUiOm51bGwsImNvbmRpdGlvbnMiOiIodHJ1ZSkiLCJvcGVyYXRpb25zIjoiKGFwcGVuZCBcIidzXCIgQHZhbHVlKSIsIm9yaWdpbmFsIjoiTWljaGFlbCIsInRyYW5zZm9ybWVkIjoiTWljaGFlbCdzIn0%3D\">Michael's</tml:case></tml:token> post.")
+          Tml.session.current_translator.inline = false
+          Tml.config.format = :plain
 
           expect(@english.translate('{actor} liked {target::pos} post.', :actor => {:object => female, :attribute => :name}, :target => {:object => male, :attribute => :name})).to eq("Anna liked Michael's post.")
 

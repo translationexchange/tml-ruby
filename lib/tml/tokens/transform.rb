@@ -208,16 +208,22 @@ class Tml::Tokens::Transform < Tml::Tokens::Data
 
     return label unless value
 
+    decorated_value = decorate(token_value(Tml::Utils.hash_value(context, key), language, options), options)
+
     substitution_value = []
     if displayed_in_translation?
-      substitution_value << token_value(Tml::Utils.hash_value(context, key), language, options)
+      substitution_value << decorated_value
       substitution_value << ' '
     else
-      value = value.gsub("##{short_name}#", token_value(Tml::Utils.hash_value(context, key), language, options))
+      value = value.gsub("##{short_name}#", decorated_value)
     end
     substitution_value << value
 
     label.gsub(full_name, substitution_value.join(''))
   end
-  
+
+  def decoation_name
+    'piped'
+  end
+
 end
