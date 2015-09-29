@@ -135,8 +135,8 @@ class Tml::Application < Tml::Base
   end
 
   # Normalizes and returns current language
-  # TODO: verify usage
   def current_language(locale)
+    return Tml.config.default_language unless locale
     locale = locale.gsub('_', '-') if locale
     lang = language(locale)
     lang ||= language(locale.split('-').first) if locale.index('-')
