@@ -35,8 +35,6 @@ require 'zlib'
 require 'stringio'
 
 class Tml::Api::Client < Tml::Base
-  CDN_HOST = 'https://cdn.translationexchange.com'
-  API_HOST = 'https://api.translationexchange.com'
   API_PATH = '/v1'
 
   attributes :application
@@ -66,16 +64,8 @@ class Tml::Api::Client < Tml::Base
     not data['error'].nil?
   end
 
-  def host
-    application.host || API_HOST
-  end
-
-  def cdn_host
-    CDN_HOST
-  end
-
   def connection
-    @connection ||= Faraday.new(:url => host) do |faraday|
+    @connection ||= Faraday.new(:url => application.host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
       # faraday.response :logger                  # log requests to STDOUT
       faraday.adapter(Faraday.default_adapter)    # make requests with Net::HTTP
@@ -99,7 +89,7 @@ class Tml::Api::Client < Tml::Base
   end
 
   def cdn_connection
-    @cdn_connection ||= Faraday.new(:url => cdn_host) do |faraday|
+    @cdn_connection ||= Faraday.new(:url => application.cdn_host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
       faraday.adapter(Faraday.default_adapter)    # make requests with Net::HTTP
     end
@@ -109,8 +99,8 @@ class Tml::Api::Client < Tml::Base
     return nil if Tml.cache.version == 'undefined' || Tml.cache.version.to_s == '0'
 
     response = nil
-    cdn_path = "/#{Tml.config.application[:key]}/#{Tml.cache.version}/#{key}.json.gz"
-    trace_api_call(cdn_path, params, opts.merge(:host => cdn_host)) do
+    cdn_path = "/#{application.key}/#{Tml.cache.version}/#{key}.json.gz"
+    trace_api_call(cdn_path, params, opts.merge(:host => application.cdn_host)) do
       begin
         response = cdn_connection.get do |request|
           prepare_request(request, cdn_path, params)
@@ -138,10 +128,19 @@ class Tml::Api::Client < Tml::Base
     data
   end
 
+  def enable_cache?(opts)
+    return false unless opts[:method] == :get
+    return false if opts[:cache_key].nil?
+    return false unless Tml.cache.enabled?
+    return false if Tml.session.inline_mode?
+    return false if Tml.session.block_option(:live)
+    true
+  end
+
   def api(path, params = {}, opts = {})
     # inline mode should always bypass API calls
     # get request uses local cache, then CDN, the API
-    if opts[:method] == :get and opts[:cache_key] and Tml.cache.enabled? and not Tml.session.inline_mode?
+    if enable_cache?(opts)
       verify_cache_version
       data = Tml.cache.fetch(opts[:cache_key]) do
         if Tml.cache.read_only?
@@ -195,18 +194,16 @@ class Tml::Api::Client < Tml::Base
     response = nil
     error = nil
 
-    token = Tml.config.application ? Tml.config.application[:token] : ''
-
     # oauth path is separate from versioned APIs
     path = prepare_api_path(path)
-    params = params.merge(:access_token => token) unless path.index('oauth')
+    params = params.merge(:access_token => application.token) unless path.index('oauth')
 
     if opts[:method] == :post
       params = params.merge(:api_key => application.key)
     end
 
     @compressed = false
-    trace_api_call(path, params, opts.merge(:host => host)) do
+    trace_api_call(path, params, opts.merge(:host => application.host)) do
       begin
         if opts[:method] == :post
           response = connection.post(path, params)

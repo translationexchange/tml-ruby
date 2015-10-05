@@ -41,7 +41,7 @@ class Tml::Translator < Tml::Base
   end
 
   def inline?
-    return Tml.session.block_options[:inline] unless Tml.session.block_options[:inline].nil?
-    super
+    Tml.session.block_option(:inline) || super
   end
+
 end
