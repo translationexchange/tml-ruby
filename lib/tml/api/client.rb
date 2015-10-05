@@ -130,7 +130,7 @@ class Tml::Api::Client < Tml::Base
 
   def enable_cache?(opts)
     return false unless opts[:method] == :get
-    return false if opts[:cache_key].blank?
+    return false if opts[:cache_key].nil?
     return false unless Tml.cache.enabled?
     return false if Tml.session.inline_mode?
     return false if Tml.session.block_option(:live)
