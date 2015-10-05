@@ -333,7 +333,7 @@ module Tml
       def sanitize(value, object, language, options)
         value = value.to_s
 
-        unless Tml.session.block_options[:skip_html_escaping]
+        unless Tml.session.block_option(:skip_html_escaping)
           if options[:safe] == false
             value = CGI.escapeHTML(value)
           end

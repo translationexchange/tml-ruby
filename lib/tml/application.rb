@@ -33,6 +33,10 @@
 require 'faraday'
 
 class Tml::Application < Tml::Base
+
+  CDN_HOST = 'https://cdn.translationexchange.com'
+  API_HOST = 'https://api.translationexchange.com'
+
   attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level, :tools
   has_many :features, :languages, :languages_by_locale, :sources, :tokens, :css, :shortcuts, :translations, :extensions
 
@@ -44,6 +48,18 @@ class Tml::Application < Tml::Base
   # Returns translations cache key
   def self.translations_cache_key(locale)
     "#{locale}/translations"
+  end
+
+  def token
+    access_token
+  end
+
+  def host
+    super || API_HOST
+  end
+
+  def cdn_host
+    CDN_HOST
   end
 
   # Fetches application definition from the service

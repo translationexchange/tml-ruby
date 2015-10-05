@@ -41,9 +41,11 @@ module Tml
     attr_accessor :current_user, :current_locale, :current_language, :current_translator, :current_source
 
     def init(opts = {})
-      return unless Tml.config.enabled? and Tml.config.application
+      return if Tml.config.disabled?
 
-      host = opts[:host] || Tml.config.application[:host]
+      key   = opts[:key]    || Tml.config.application[:key]
+      token = opts[:token]  || Tml.config.application[:token]
+      host  = opts[:host]   || Tml.config.application[:host]
 
       Tml.cache.reset_version
 
@@ -52,13 +54,7 @@ module Tml
       self.current_locale = opts[:locale]
       self.current_translator = opts[:translator]
 
-      self.application = Tml::Application.new(:host => host).fetch
-
-      # if inline mode don't use any app cache
-      # if inline_mode?
-      #   self.application = self.application.dup
-      #   self.application.reset_translation_cache
-      # end
+      self.application = Tml::Application.new(:key => key, :access_token => token, :host => host).fetch
 
       if self.current_translator
         self.current_translator.application = self.application
@@ -97,19 +93,13 @@ module Tml
     end
 
     def source_language
-      (@block_options || []).reverse.each do |opts|
-        return application.language(opts[:locale]) unless opts[:locale].nil?
-      end
-
-      application.language
+      locale = block_option(:locale)
+      locale ? application.language(locale) : application.language
     end
 
     def target_language
-      (@block_options || []).reverse.each do |opts|
-        return application.language(opts[:target_locale]) unless opts[:target_locale].nil?
-      end
-
-      current_language
+      target_locale = block_option(:target_locale)
+      target_locale ? application.language(target_locale) : current_language
     end
 
     def inline_mode?
@@ -120,8 +110,19 @@ module Tml
     ## Block Options
     #########################################################
 
+    def block_option(key, lookup = true)
+      if lookup
+        block_options_queue.reverse.each do |options|
+          value = options[key.to_s] || options[key.to_sym]
+          return value if value
+        end
+        return nil
+      end
+      block_options[key]
+    end
+
     def push_block_options(opts)
-      (@block_options ||= []).push(opts)
+      block_options_queue.push(opts)
     end
 
     def pop_block_options
@@ -129,12 +130,12 @@ module Tml
       @block_options.pop
     end
 
-    def block_options
-      (@block_options ||= []).last || {}
+    def block_options_queue
+      @block_options ||= []
     end
 
-    def block_options_queue
-      @block_options
+    def block_options
+      block_options_queue.last || {}
     end
 
     def with_block_options(opts)
@@ -144,14 +145,6 @@ module Tml
       end
       pop_block_options
       ret
-    end
-
-    def current_source_from_block_options
-      arr = @block_options || []
-      arr.reverse.each do |opts|
-        return application.source_by_key(opts[:source]) unless opts[:source].blank?
-      end
-      nil
     end
 
   end

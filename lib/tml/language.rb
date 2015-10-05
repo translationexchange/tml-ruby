@@ -109,7 +109,7 @@ class Tml::Language < Tml::Base
   end
 
   def current_source(options)
-    (options[:source] || Tml.session.block_options[:source] || Tml.session.current_source || 'undefined').to_s
+    (options[:source] || Tml.session.block_option(:source) || Tml.session.current_source || 'undefined').to_s
   end
 
   #######################################################################################################
@@ -137,8 +137,8 @@ class Tml::Language < Tml::Base
       :application  => application,
       :label        => params[:label],
       :description  => params[:description],
-      :locale       => hash_value(params[:options], :locale) || hash_value(Tml.session.block_options, :locale) || Tml.config.default_locale,
-      :level        => hash_value(params[:options], :level) || hash_value(Tml.session.block_options, :level) || Tml.config.default_level,
+      :locale       => hash_value(params[:options], :locale) || Tml.session.block_option(:locale) || Tml.config.default_locale,
+      :level        => hash_value(params[:options], :level) || Tml.session.block_option(:level) || Tml.config.default_level,
       :translations => []
     })
 
@@ -166,13 +166,13 @@ class Tml::Language < Tml::Base
     current_source_path = source_path
 
     # Dynamic sources are never registered under the parent source
-    if hash_value(Tml.session.block_options, :dynamic)
+    if Tml.session.block_option(:dynamic)
       current_source_path = source_key
     else
       application.verify_source_path(source_key, current_source_path)
     end
 
-    # Tml.logger.debug("#{params[:label]}, #{source_key}")
+    # Tml.logger.debug("#{params[:label]} : #{source_key}")
 
     source = application.source(source_key, locale)
     cached_translations = source.cached_translations(locale, translation_key.key)

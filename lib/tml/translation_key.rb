@@ -41,7 +41,7 @@ class Tml::TranslationKey < Tml::Base
     super
 
     self.attributes[:key] ||= self.class.generate_key(label, description)
-    self.attributes[:locale] ||= Tml.session.block_options[:locale] || (application ? application.default_locale : Tml.config.default_locale)
+    self.attributes[:locale] ||= Tml.session.block_option(:locale) || (application ? application.default_locale : Tml.config.default_locale)
     self.attributes[:language] ||= application ? application.language(locale) : Tml.config.default_language
     self.attributes[:translations] = {}
 
