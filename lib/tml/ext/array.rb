@@ -67,7 +67,7 @@ class Array
   end
 
   # creates a sentence with tr "and" joiner
-  def translate_sentence(description = '', options = {})
+  def translate_sentence(description = nil, options = {})
     return '' if empty?
     return first if size == 1
 
@@ -77,7 +77,7 @@ class Array
     options[:joiner] ||= 'and'
 
     result = elements[0..-2].join(options[:separator])
-    result << ' ' << options[:joiner].translate('List elements joiner', {}, options) << ' '
+    result << ' ' << options[:joiner].translate(description || 'List elements joiner', {}, options) << ' '
     result << elements.last
 
     result.tml_translated

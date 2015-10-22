@@ -65,7 +65,7 @@ class Tml::CacheAdapters::Memcache < Tml::Cache
 
     data
   rescue Exception => ex
-    warn("Failed to retrieve data: #{key}")
+    warn("#{ex.message}: #{key}")
     return nil unless block_given?
     yield
   end
@@ -76,7 +76,6 @@ class Tml::CacheAdapters::Memcache < Tml::Cache
     @cache.set(versioned_key(key, opts), strip_extensions(data), ttl)
     data
   rescue Exception => ex
-    pp ex
     warn("Failed to store data: #{key}")
     data
   end
