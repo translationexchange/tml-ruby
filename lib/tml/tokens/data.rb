@@ -214,7 +214,7 @@ module Tml
         uniq_id = Tml::TranslationKey.generate_key(label, values.join(","))
         result << "<span id=\"tml_other_link_#{uniq_id}\"> #{joiner} "
 
-        result << "<a href='#' onClick=\"Tml.Utils.Effects.hide('tml_other_link_#{uniq_id}'); Tml.Utils.Effects.show('tml_other_elements_#{uniq_id}'); return false;\">"
+        result << "<a href='#' onClick=\"document.getElementById('tml_other_link_#{uniq_id}').style.display='none'; document.getElementById('tml_other_elements_#{uniq_id}').style.display='inline'; return false;\">"
         if list_options[:remainder] and list_options[:remainder].is_a?(Proc)
           result << list_options[:remainder].call(remaining_ary)
         else
@@ -229,7 +229,7 @@ module Tml
         result << remaining_ary.last
 
         if list_options[:collapsable]
-          result << "<a href='#' style='font-size:smaller;white-space:nowrap' onClick=\"Tml.Utils.Effects.show('tml_other_link_#{uniq_id}'); Tml.Utils.Effects.hide('tml_other_elements_#{uniq_id}'); return false;\"> "
+          result << "<a href='#' style='font-size:smaller;white-space:nowrap' onClick=\"document.getElementById('tml_other_link_#{uniq_id}').style.display='inline'; document.getElementById('tml_other_elements_#{uniq_id}').style.display='none'; return false;\"> "
           result << language.translate(list_options[:less], list_options[:description], {}, options)
           result << "</a>"
         end

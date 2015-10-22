@@ -91,9 +91,7 @@ class Tml::Source < Tml::Base
       "sources/#{self.key}/translations",
       {:locale => locale, :per_page => 10000},
       {:cache_key => Tml::Source.cache_key(locale, self.source)}
-    )
-
-    return self unless results
+    ) || []
 
     update_translations(locale, results)
 

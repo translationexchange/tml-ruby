@@ -133,7 +133,7 @@ class Tml::Api::Client < Tml::Base
     return false if opts[:cache_key].nil?
     return false unless Tml.cache.enabled?
     return false if Tml.session.inline_mode?
-    return false if Tml.session.block_option(:live)
+    return false if Tml.session.block_option(:live) and opts[:cache_key].index('sources')
     true
   end
 
