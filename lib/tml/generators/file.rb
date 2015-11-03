@@ -45,7 +45,7 @@ class Tml::Generators::File < Tml::Generators::Base
 
       archive_name = "#{cache_version}.tar.gz"
       path = "#{cache_path}/#{archive_name}"
-      url = "#{api_client.cdn_host}/#{Tml.config.application[:key]}/#{archive_name}"
+      url = "#{api_client.application.cdn_host}/#{Tml.config.application[:key]}/#{archive_name}"
 
       log("Downloading cache file: #{url}")
       open(path, 'wb') do |file|
