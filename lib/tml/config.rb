@@ -80,13 +80,14 @@ module Tml
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
-    attr_accessor :invalidator, :agent
+    attr_accessor :invalidator, :agent, :api_client_class
 
     # Used for IRB only
     attr_accessor :submit_missing_keys_realtime
 
     def initialize
       @enabled = true
+      @api_client_class = Tml::Api::Client
       @default_level  = 0
       @format = :html
       @subdomains = false
@@ -418,7 +419,7 @@ module Tml
     end
 
     def default_day_name(index)
-      "" + default_day_names[index]
+      '' + default_day_names[index]
     end
 
     def default_abbr_day_names

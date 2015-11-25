@@ -311,7 +311,7 @@ class Tml::Application < Tml::Base
   end
 
   def api_client
-    @api_client ||= Tml::Api::Client.new(application: self)
+    @api_client ||= Tml.config.api_client_class.new(application: self)
   end
 
   def postoffice
