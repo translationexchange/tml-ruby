@@ -32,25 +32,28 @@
 
 class Tml::Decorators::Base < Tml::Base
 
-  def self.decorator
-    # can alternate based on the format in the config
-    Tml.config.decorator_class.new
+  def self.decorator(options = {})
+    decorator_klass = Tml.config.decorator_class
+    if options[:decorator]
+      decorator_klass = "Tml::Decorators::#{options[:decorator].camelcase}".constantize
+    end
+    decorator_klass.new
   end
 
   def decorate(translated_label, translation_language, target_language, translation_key, options = {})
-    raise Tml::Exception.new('Must be implemented by the extending class')
+    translated_label
   end
 
   def decorate_language_case(language_case, rule, original, transformed, options = {})
-    raise Tml::Exception.new('Must be implemented by the extending class')
+    transformed
   end
 
   def decorate_token(token, value, options = {})
-    raise Tml::Exception.new('Must be implemented by the extending class')
+    value
   end
 
   def decorate_element(token, value, options = {})
-    raise Tml::Exception.new('Must be implemented by the extending class')
+    value
   end
 
   def inline_mode?

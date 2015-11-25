@@ -88,6 +88,40 @@ class Tml::TranslationKey < Tml::Base
     self
   end
 
+  def self.cache_key(locale, key)
+    File.join(locale, 'keys', key)
+  end
+
+  # update translations in the key
+  def update_translations(locale, data)
+    set_translations(locale, application.cache_translations(
+                               locale,
+                               key,
+                               data.is_a?(Hash) ? data['translations'] : data
+                           ))
+  end
+
+  # fetch translations for a specific translation key
+  def fetch_translations(locale)
+    self.translations ||= {}
+    return if self.translations[locale]
+
+    # Tml.logger.debug("Fetching translations for #{label}")
+
+    results = self.application.api_client.get(
+        "translation_keys/#{self.key}/translations",
+        {:locale => locale, :per_page => 10000},
+        {:cache_key => Tml::TranslationKey.cache_key(locale, self.key)}
+    ) || []
+
+    update_translations(locale, results)
+
+    self
+  rescue Tml::Exception => ex
+    self.translations = {}
+    self
+  end
+
   ###############################################################
   ## Translation Methods
   ###############################################################
@@ -100,12 +134,12 @@ class Tml::TranslationKey < Tml::Base
   def find_first_valid_translation(language, token_values)
     translations = translations_for_language(language)
 
-    translations.sort! { |x,y| x.precedence <=> y.precedence }
+    translations.sort! { |x, y| x.precedence <=> y.precedence }
 
     translations.each do |translation|
       return translation if translation.matches_rules?(token_values)
     end
-    
+
     nil
   end
 
@@ -115,7 +149,7 @@ class Tml::TranslationKey < Tml::Base
     end
 
     translation = find_first_valid_translation(language, token_values)
-    decorator = Tml::Decorators::Base.decorator
+    decorator = Tml::Decorators::Base.decorator(options)
 
     if translation
       options[:locked] = translation.locked
@@ -160,7 +194,7 @@ class Tml::TranslationKey < Tml::Base
 
   # if the translations engine is disabled
   def self.substitute_tokens(label, token_values, language, options = {})
-    return label.to_s if options[:skip_substitution] 
+    return label.to_s if options[:skip_substitution]
     Tml::TranslationKey.new(:label => label.to_s).substitute_tokens(label.to_s, token_values, language, options)
   end
 
