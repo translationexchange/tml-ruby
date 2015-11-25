@@ -96,4 +96,14 @@ class Hash
     end
   end
 
+  def tml_translated
+    return self if frozen?
+    @tml_translated = true
+    self
+  end
+
+  def tml_translated?
+    @tml_translated
+  end
+
 end

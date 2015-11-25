@@ -32,20 +32,4 @@
 
 class Tml::Decorators::Default < Tml::Decorators::Base
 
-  def decorate(translated_label, translation_language, target_language, translation_key, options = {})
-    translated_label
-  end
-
-  def decorate_language_case(language_case, rule, original, transformed, options = {})
-    transformed
-  end
-
-  def decorate_token(token, value, options = {})
-    value
-  end
-
-  def decorate_element(token, value, options = {})
-    value
-  end
-
 end

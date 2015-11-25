@@ -1,5 +1,6 @@
+# encoding: UTF-8
 #--
-# Copyright (c) 2015 Translation Exchange Inc. http://translationexchange.com
+# Copyright (c) 2015 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -29,68 +30,40 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-class Array
+class Tml::Decorators::Json < Tml::Decorators::Base
 
-  # translates an array of options for a select tag
-  def tro(description = '', options = {})
-    return [] if empty?
+  def decorate(translated_label, translation_language, target_language, translation_key, options = {})
+    #Tml.logger.info("Decorating #{translated_label} of #{translation_language.locale} to #{target_language.locale}")
 
-    options = options.merge(:skip_decorations => true)
+    data = {
+        original: {
+            label: translation_key.label,
+            locale: translation_key.locale
+        },
+        translation: {
+            label: translated_label,
+            locale: translation_language.locale,
+        },
+        options: options,
+        target_locale: target_language.locale
+    }
 
-    collect do |opt|
-      if opt.is_a?(Array) and opt.first.is_a?(String) 
-        [opt.first.translate(description, {}, options), opt.last]
-      elsif opt.is_a?(String)
-        [opt.translate(description, {}, options), opt]
-      else  
-        opt
+    if options[:locked]
+      data[:status] = 'locked'
+    elsif translation_language == translation_key.language
+      if options[:pending]
+        data[:status] = 'pending'
+      else
+        data[:status] = 'not_translated'
       end
+    elsif translation_language == target_language
+      data[:status] = 'translated'
+    else
+      data[:status] = 'fallback'
     end
+
+    data
   end
 
-  # translates and joins all elements
-  def translate_and_join(separator = ', ', description = '', options = {})
-    self.translate(description, options).join(separator).tml_translated
-  end
-
-  # translate array values 
-  def translate(description = '', options = {})
-    return [] if empty?
-
-    collect do |opt|
-      if opt.is_a?(String)
-        opt.translate(description, {}, options)
-      else  
-        opt
-      end
-    end
-  end
-
-  # creates a sentence with tr "and" joiner
-  def translate_sentence(description = nil, options = {})
-    return '' if empty?
-    return first if size == 1
-
-    elements = translate(description, options)
-
-    options[:separator] ||= ', '
-    options[:joiner] ||= 'and'
-
-    result = elements[0..-2].join(options[:separator])
-    result << ' ' << options[:joiner].translate(description || 'List elements joiner', {}, options) << ' '
-    result << elements.last
-
-    result.tml_translated
-  end
-
-  def tml_translated
-    return self if frozen?
-    @tml_translated = true
-    self
-  end
-
-  def tml_translated?
-    @tml_translated
-  end
 
 end
