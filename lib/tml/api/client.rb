@@ -73,7 +73,7 @@ class Tml::Api::Client < Tml::Base
   end
 
   def get_cache_version
-    execute_request('applications/current/version', {}, {:raw => true})
+    execute_request('projects/current/version', {}, {:raw => true})
   end
 
   def verify_cache_version
@@ -128,12 +128,18 @@ class Tml::Api::Client < Tml::Base
     data
   end
 
+  def live_translations_request?(cache_key)
+    return if cache_key.blank?
+    return unless Tml.session.block_option(:live)
+    cache_key.index('sources') or cache_key.index('keys')
+  end
+
   def enable_cache?(opts)
     return false unless opts[:method] == :get
     return false if opts[:cache_key].nil?
     return false unless Tml.cache.enabled?
+    return false if live_translations_request?(opts[:cache_key])
     return false if Tml.session.inline_mode?
-    return false if Tml.session.block_option(:live) and opts[:cache_key].index('sources')
     true
   end
 
@@ -289,6 +295,8 @@ class Tml::Api::Client < Tml::Base
     #[:client_secret, :access_token].each do |param|
     #  params = params.merge(param => "##filtered##") if params[param]
     #end
+
+    path = "#{path[0] == '/' ? '' : '/'}#{path}"
 
     if opts[:method] == :post
       Tml.logger.debug("post: #{opts[:host]}#{path}")

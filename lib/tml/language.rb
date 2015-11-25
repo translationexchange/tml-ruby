@@ -54,7 +54,6 @@ class Tml::Language < Tml::Base
     self
   end
 
-
   def update_attributes(attrs)
     super
 
@@ -142,7 +141,7 @@ class Tml::Language < Tml::Base
       :translations => []
     })
 
-    # Tml.logger.info("Translating " + params[:label] + " from: " + translation_key.locale.inspect + " to " + locale.inspect)
+    # Tml.logger.info("Translating #{params[:label]} from: #{translation_key.locale.inspect} to #{locale.inspect}")
 
     params[:tokens] ||= {}
     params[:tokens][:viewing_user] ||= Tml.session.current_user
@@ -156,16 +155,24 @@ class Tml::Language < Tml::Base
       ).tml_translated
     end
 
+    # if translations have already been cached in the application, use them
     cached_translations = application.cached_translations(locale, translation_key.key)
     if cached_translations
       translation_key.set_translations(locale, cached_translations)
       return translation_key.translate(self, params[:tokens], params[:options]).tml_translated
     end
 
+    # each key translations will be loaded directly from the API
+    if Tml.session.block_option(:by_key)
+      translation_key.fetch_translations(locale)
+      return translation_key.translate(self, params[:tokens], params[:options]).tml_translated
+    end
+
+    # fetch translations grouped by source
     source_key = current_source(options)
     current_source_path = source_path
 
-    # Dynamic sources are never registered under the parent source
+    # Dynamic sources are never registered under the parent source for fast retrieval
     if Tml.session.block_option(:dynamic)
       current_source_path = source_key
     else
