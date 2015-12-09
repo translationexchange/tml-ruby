@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'pp'
-
 def execute(cmd)
   print '$ ' + cmd + "\n"
   system(cmd)
@@ -34,9 +32,13 @@ def increment_version
   @version = nil
 end
 
-execute('git checkout master')
-execute('git merge develop')
-execute('git push')
+puts "\nBuilding tml-#{version}.gem...\n\n"
+
+if ARGV.include?('release')
+  execute('git checkout master')
+  execute('git merge develop')
+  execute('git push')
+end
 
 execute('bundle exec rspec')
 execute('gem build tml.gemspec')
@@ -53,8 +55,6 @@ if ARGV.include?('release')
   execute("git add #{version_file_path}")
   execute("git commit -m 'Updated version to #{version}'")
   execute('git push')
-else
-  execute('git checkout develop')
 end
 
 
