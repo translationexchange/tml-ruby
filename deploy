@@ -33,7 +33,7 @@ def increment_version
   @version = nil
 end
 
-puts "\nBuilding tml-#{version}.gem...\n\n"
+puts "\nBuilding tml-#{version}.gem..."
 
 if ARGV.include?('release')
   execute('git checkout master')
