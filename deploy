@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 
 def execute(cmd)
-  print '$ ' + cmd + "\n"
+  puts "\n***************************************************************************\n"
+  puts "$ #{cmd}"
   system(cmd)
 end
 
