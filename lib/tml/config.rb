@@ -103,7 +103,8 @@ module Tml
 
       @agent = {
         enabled: true,
-        type:    'tools'
+        type:    'agent',
+        cache:   24.hours
       }
 
       # if running from IRB, make it default to TRUE
