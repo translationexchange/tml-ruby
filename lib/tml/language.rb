@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2015 Translation Exchange, Inc
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -155,6 +155,11 @@ class Tml::Language < Tml::Base
       ).tml_translated
     end
 
+    # check if key was ignored on the application level
+    if application.ignored_key?(translation_key.key)
+      return translation_key.translate(self, params[:tokens], params[:options].merge(:skip_decorations => true)).tml_translated
+    end
+
     # if translations have already been cached in the application, use them
     cached_translations = application.cached_translations(locale, translation_key.key)
     if cached_translations
@@ -182,6 +187,12 @@ class Tml::Language < Tml::Base
     # Tml.logger.debug("#{params[:label]} : #{source_key}")
 
     source = application.source(source_key, locale)
+
+    # check if a key was ignored on the source level
+    if source.ignored_key?(translation_key.key)
+      return translation_key.translate(self, params[:tokens], params[:options].merge(:skip_decorations => true)).tml_translated
+    end
+
     cached_translations = source.cached_translations(locale, translation_key.key)
 
     if cached_translations

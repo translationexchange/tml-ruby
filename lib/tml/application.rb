@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2015 Translation Exchange, Inc
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -39,6 +39,7 @@ class Tml::Application < Tml::Base
 
   attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level, :tools
   has_many :features, :languages, :languages_by_locale, :sources, :tokens, :css, :shortcuts, :translations, :extensions
+  has_many :ignored_keys
 
   # Returns application cache key
   def self.cache_key
@@ -66,7 +67,8 @@ class Tml::Application < Tml::Base
   def fetch
     data = api_client.get('projects/current/definition',{
       locale: Tml.session.current_locale,
-      source: Tml.session.current_source
+      source: Tml.session.current_source,
+      ignored: true
     }, {
       cache_key: self.class.cache_key
     })
@@ -125,7 +127,7 @@ class Tml::Application < Tml::Base
           application:  self,
           source:       source
         )
-        self.sources[source].update_translations(source_locale, data['results'])
+        self.sources[source].update_translations(source_locale, data)
       end
     end
   end
@@ -239,17 +241,25 @@ class Tml::Application < Tml::Base
     @missing_keys_by_sources  = nil
   end
 
+  def ignored_key?(key)
+    return false if ignored_keys.nil?
+    not ignored_keys.index(key).nil?
+  end
+
   def fetch_translations(locale)
     self.translations ||= {}
     self.translations[locale] ||= begin
       results = Tml.cache.fetch(Tml::Application.translations_cache_key(locale)) do
         data = {}
         unless Tml.cache.read_only?
-          api_client.paginate('projects/current/translations', :per_page => 1000) do |translations|
-            data.merge!(translations)
-          end
+          data = api_client.get('projects/current/translations', :all => true, :ignored => true, :raw => true)
         end
         data
+      end
+
+      if results.is_a?(Hash) and results['results']
+        results = results['results']
+        self.ignored_keys = results['ignored_keys'] || []
       end
 
       translations_by_key = {}
