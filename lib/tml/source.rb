@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2015 Translation Exchange, Inc
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -35,7 +35,7 @@ require 'digest/md5'
 class Tml::Source < Tml::Base
   belongs_to  :application
   attributes  :key, :source, :url, :name, :description
-  has_many    :translations
+  has_many    :translations, :ignored_keys
 
   def self.normalize(url)
     return nil if url.nil? or url == ''
@@ -64,11 +64,18 @@ class Tml::Source < Tml::Base
     self.key ||= Tml::Source.generate_key(attrs[:source])
   end
 
-  def update_translations(locale, results)
+  def ignored_key?(key)
+    return false if ignored_keys.nil?
+    not ignored_keys.index(key).nil?
+  end
+
+  def update_translations(locale, data)
     self.translations ||= {}
     self.translations[locale] = {}
 
-    results.each do |key, data|
+    data = data['results'] if data.is_a?(Hash) and data['results']
+
+    data.each do |key, data|
       translations_data = data.is_a?(Hash) ? data['translations'] : data
       self.translations[locale][key] = translations_data.collect do |t|
         Tml::Translation.new(
@@ -83,17 +90,18 @@ class Tml::Source < Tml::Base
 
   def fetch_translations(locale)
     self.translations ||= {}
+    return self if Tml.session.block_option(:dry)
     return self if self.translations[locale]
 
     # Tml.logger.debug("Fetching #{source}")
 
-    results = self.application.api_client.get(
+    data = self.application.api_client.get(
       "sources/#{self.key}/translations",
-      {:locale => locale, :per_page => 10000},
-      {:cache_key => Tml::Source.cache_key(locale, self.source)}
+      {:locale => locale, :all => true, :ignored => true},
+      {:cache_key => Tml::Source.cache_key(locale, self.source), :raw => true}
     ) || []
 
-    update_translations(locale, results)
+    update_translations(locale, data)
 
     self
   rescue Tml::Exception => ex
