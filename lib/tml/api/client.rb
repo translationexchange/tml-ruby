@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2015 Translation Exchange, Inc
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -267,7 +267,7 @@ class Tml::Api::Client < Tml::Base
 
   def process_response(data, opts)
     return nil if data.nil?
-    return data if opts['raw']
+    return data if opts[:raw] or opts[:raw_json]
 
     if data.is_a?(Hash) and data['results']
       #Tml.logger.debug("received #{data['results'].size} result(s)")

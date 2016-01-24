@@ -1,5 +1,6 @@
+# encoding: UTF-8
 #--
-# Copyright (c) 2015 Translation Exchange Inc. http://translationexchange.com
+# Copyright (c) 2016 Translation Exchange Inc. http://translationexchange.com
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -30,5 +31,5 @@
 #++
 
 module Tml
-  VERSION = '5.2.4'
+  VERSION = '5.2.5'
 end
