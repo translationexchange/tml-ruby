@@ -130,6 +130,7 @@ class Tml::Language < Tml::Base
 
   def translate(label, description = nil, tokens = {}, options = {})
     params = Tml::Utils.normalize_tr_params(label, description, tokens, options)
+    return params[:label] if params[:label].to_s.strip == '' or params[:label].index('tml:label')
     return params[:label] if params[:label].tml_translated?
 
     translation_key = Tml::TranslationKey.new({
@@ -141,23 +142,19 @@ class Tml::Language < Tml::Base
       :translations => []
     })
 
+    # pp "Translating #{params[:label]} from: #{translation_key.locale.inspect} to #{locale.inspect}"
     # Tml.logger.info("Translating #{params[:label]} from: #{translation_key.locale.inspect} to #{locale.inspect}")
 
     params[:tokens] ||= {}
     params[:tokens][:viewing_user] ||= Tml.session.current_user
 
     if Tml.config.disabled? or application.nil?
-      return translation_key.substitute_tokens(
-        params[:label],
-        params[:tokens],
-        self,
-        params[:options]
-      ).tml_translated
+      return translation_key.substitute_tokens(params[:label], params[:tokens], self, params[:options]).tml_translated
     end
 
     # check if key was ignored on the application level
     if application.ignored_key?(translation_key.key)
-      return translation_key.translate(self, params[:tokens], params[:options].merge(:skip_decorations => true)).tml_translated
+      return translation_key.substitute_tokens(params[:label], params[:tokens], self, params[:options]).tml_translated
     end
 
     # if translations have already been cached in the application, use them
@@ -190,7 +187,7 @@ class Tml::Language < Tml::Base
 
     # check if a key was ignored on the source level
     if source.ignored_key?(translation_key.key)
-      return translation_key.translate(self, params[:tokens], params[:options].merge(:skip_decorations => true)).tml_translated
+      return translation_key.substitute_tokens(params[:label], params[:tokens], self, params[:options]).tml_translated
     end
 
     cached_translations = source.cached_translations(locale, translation_key.key)

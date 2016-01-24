@@ -72,6 +72,7 @@ class Tml::Source < Tml::Base
   def update_translations(locale, data)
     self.translations ||= {}
     self.translations[locale] = {}
+    self.ignored_keys = data['ignored_keys'] || []
 
     data = data['results'] if data.is_a?(Hash) and data['results']
 
