@@ -252,7 +252,7 @@ class Tml::Application < Tml::Base
       results = Tml.cache.fetch(Tml::Application.translations_cache_key(locale)) do
         data = {}
         unless Tml.cache.read_only?
-          data = api_client.get('projects/current/translations', :all => true, :ignored => true, :raw => true)
+          data = api_client.get('projects/current/translations', :all => true, :ignored => true, :raw_json => true)
         end
         data
       end

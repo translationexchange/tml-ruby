@@ -99,8 +99,8 @@ class Tml::Source < Tml::Base
     data = self.application.api_client.get(
       "sources/#{self.key}/translations",
       {:locale => locale, :all => true, :ignored => true},
-      {:cache_key => Tml::Source.cache_key(locale, self.source), :raw => true}
-    ) || []
+      {:cache_key => Tml::Source.cache_key(locale, self.source), :raw_json => true}
+    ) || {}
 
     update_translations(locale, data)
 
