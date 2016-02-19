@@ -31,7 +31,7 @@
 #++
 
 module Tml
-  VERSION = '5.2.8'
+  VERSION = '5.3.1'
 
   def self.full_version
     "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION})"
