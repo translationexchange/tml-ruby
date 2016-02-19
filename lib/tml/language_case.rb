@@ -35,7 +35,7 @@ class Tml::LanguageCase < Tml::Base
   attributes  :id, :keyword, :latin_name, :native_name, :description, :application
   has_many    :rules
 
-  TR8N_HTML_TAGS_REGEX = /<\/?[^>]*>/
+  TML_HTML_TAGS_REGEX = /<\/?[^>]*>/
 
   def initialize(attrs = {})
     super
@@ -63,8 +63,8 @@ class Tml::LanguageCase < Tml::Base
 
     options = options.merge(:skip_decorations => true) if value.index('not_translated')
 
-    html_tokens = value.scan(TR8N_HTML_TAGS_REGEX).uniq
-    sanitized_value = value.gsub(TR8N_HTML_TAGS_REGEX, '')
+    html_tokens = value.scan(TML_HTML_TAGS_REGEX).uniq
+    sanitized_value = value.gsub(TML_HTML_TAGS_REGEX, '')
 
     if application.to_s == 'phrase'
       words = [sanitized_value]
