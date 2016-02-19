@@ -108,6 +108,7 @@ class Tml::Api::Client < Tml::Base
     Tml.logger.info("Version: #{Tml.cache.version}")
   end
 
+  # cdn_connection
   def cdn_connection
     @cdn_connection ||= Faraday.new(:url => application.cdn_host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
@@ -115,6 +116,7 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  # get from the CDN
   def get_from_cdn(key, params = {}, opts = {})
     if Tml.cache.version.invalid? and key != 'version'
       return nil
@@ -161,10 +163,12 @@ class Tml::Api::Client < Tml::Base
     data
   end
 
+  # access token
   def access_token
     application.token
   end
 
+  # should the API go to live server
   def live_api_request?
     # if no access token, never use live mode
     return false if access_token.blank?
@@ -173,6 +177,7 @@ class Tml::Api::Client < Tml::Base
     Tml.session.inline_mode? or Tml.session.block_option(:live)
   end
 
+  # checks if cache is enable
   def enable_cache?(opts)
     # only gets ever get cached
     return false unless opts[:method] == :get
@@ -338,7 +343,7 @@ class Tml::Api::Client < Tml::Base
   end
 
   def trace_api_call(path, params, opts = {})
-    #[:client_secret, :access_token].each do |param|
+    #[:access_token].each do |param|
     #  params = params.merge(param => "##filtered##") if params[param]
     #end
 
