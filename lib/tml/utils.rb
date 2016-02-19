@@ -62,6 +62,11 @@ module Tml
       (0..16).to_a.map{|a| rand(16).to_s(16)}.join
     end
 
+    def self.interval_timestamp(interval)
+      t = Time.now.to_i
+      t - (t % interval.to_i)
+    end
+
     def self.cookie_name(app_key)
       "trex_#{app_key}"
     end

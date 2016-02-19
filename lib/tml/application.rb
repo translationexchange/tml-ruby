@@ -34,7 +34,8 @@ require 'faraday'
 
 class Tml::Application < Tml::Base
 
-  CDN_HOST = 'https://cdn.translationexchange.com'
+  # CDN_HOST = 'https://cdn.translationexchange.com'
+  CDN_HOST = 'https://trex-snapshots.s3-us-west-1.amazonaws.com'
   API_HOST = 'https://api.translationexchange.com'
 
   attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level, :tools
@@ -65,7 +66,7 @@ class Tml::Application < Tml::Base
 
   # Fetches application definition from the service
   def fetch
-    data = api_client.get('projects/current/definition',{
+    data = api_client.get("projects/#{key}/definition",{
       locale: Tml.session.current_locale,
       source: Tml.session.current_source,
       ignored: true
@@ -76,6 +77,7 @@ class Tml::Application < Tml::Base
     if data
       update_attributes(data)
     else
+      add_language(Tml.config.default_language)
       Tml.logger.debug('Cache enabled but no data is provided.')
     end
 
@@ -207,6 +209,7 @@ class Tml::Application < Tml::Base
 
   def register_missing_key(source_key, tkey)
     return if Tml.cache.enabled? and not Tml.session.inline_mode?
+    source_key = source_key.to_s
     @missing_keys_by_sources ||= {}
     @missing_keys_by_sources[source_key] ||= {}
     @missing_keys_by_sources[source_key][tkey.key] ||= tkey
@@ -252,7 +255,7 @@ class Tml::Application < Tml::Base
       results = Tml.cache.fetch(Tml::Application.translations_cache_key(locale)) do
         data = {}
         unless Tml.cache.read_only?
-          data = api_client.get('projects/current/translations', :all => true, :ignored => true, :raw_json => true)
+          data = api_client.get("projects/#{key}/translations", :all => true, :ignored => true, :raw_json => true)
         end
         data
       end

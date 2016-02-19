@@ -76,7 +76,7 @@ module Tml
   class Config
     # Configuration Attributes
     attr_accessor :enabled, :locale, :default_level, :format, :application, :context_rules, :logger, :cache, :default_tokens, :localization
-    attr_accessor :auto_init, :source_separator
+    attr_accessor :auto_init, :source_separator, :version_check_interval
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
@@ -93,6 +93,7 @@ module Tml
       @subdomains = false
       @auto_init = true
       @source_separator = '@:@'
+      @version_check_interval = 3600
 
       @locale = {
         default:    'en',

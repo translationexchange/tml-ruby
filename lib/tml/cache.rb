@@ -32,8 +32,6 @@
 
 module Tml
 
-  CACHE_VERSION_KEY = 'current_version'
-
   def self.cache
     @cache ||= begin
       if Tml.config.cache_enabled?
@@ -48,41 +46,18 @@ module Tml
 
   class Cache
 
-    # Returns current cache version
     def version
-      @version
-    end
-
-    # sets the current version
-    def version=(new_version)
-      @version = new_version
+      @version ||= Tml::CacheVersion.new(self)
     end
 
     # resets current version
     def reset_version
-      @version = nil
+      version.reset
     end
 
     # upgrade current version
     def upgrade_version
-      store(CACHE_VERSION_KEY, {'version' => 'undefined'})
-      reset_version
-    end
-
-    # fetches the version from the cache
-    def fetch_version
-      @version ||= begin
-        v = fetch(CACHE_VERSION_KEY) do
-          {'version' => Tml.config.cache[:version] || 'undefined'}
-        end
-        v.is_a?(Hash) ? v['version'] : v
-      end
-    end
-
-    # stores the current version back in cache
-    def store_version(new_version)
-      @version = new_version
-      store(CACHE_VERSION_KEY, {'version' => new_version})
+      version.upgrade
     end
 
     # checks if Tml is enabled
@@ -119,7 +94,7 @@ module Tml
 
     # versioned name of cache key
     def versioned_key(key, opts = {})
-      "tml_#{namespace}#{CACHE_VERSION_KEY == key ? '' : "_v#{version}"}_#{key}"
+      version.versioned_key(key, namespace)
     end
 
     # fetches key from cache
