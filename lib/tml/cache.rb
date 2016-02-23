@@ -46,6 +46,7 @@ module Tml
 
   class Cache
 
+    # version object
     def version
       @version ||= Tml::CacheVersion.new(self)
     end
@@ -123,6 +124,7 @@ module Tml
       # do nothing
     end
 
+    # remove extensions
     def strip_extensions(data)
       if data.is_a?(Hash)
         data = data.dup
