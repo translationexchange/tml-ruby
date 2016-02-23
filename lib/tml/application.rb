@@ -38,7 +38,7 @@ class Tml::Application < Tml::Base
   CDN_HOST = 'https://trex-snapshots.s3-us-west-1.amazonaws.com'
   API_HOST = 'https://api.translationexchange.com'
 
-  attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level, :tools
+  attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level
   has_many :features, :languages, :languages_by_locale, :sources, :tokens, :css, :shortcuts, :translations, :extensions
   has_many :ignored_keys
 
@@ -78,7 +78,7 @@ class Tml::Application < Tml::Base
       update_attributes(data)
     else
       add_language(Tml.config.default_language)
-      Tml.logger.debug('Cache enabled but no data is provided.')
+      Tml.logger.debug('Cache is disabled or no data has been cached.')
     end
 
     self
@@ -179,16 +179,6 @@ class Tml::Application < Tml::Base
     @locales ||= languages.collect{|lang| lang.locale}
   end
 
-  # Returns tools data
-  def tools
-    @attributes[:tools] || {}
-  end
-
-  # Returns asset url
-  def url_for(path)
-    "#{tools['assets']}#{path}"
-  end
-
   # Returns source by key
   def source(key, locale)
     self.sources ||= {}
@@ -198,7 +188,7 @@ class Tml::Application < Tml::Base
     ).fetch_translations(locale)
   end
 
-  # Verifies current source path
+  # Verify current source path
   def verify_source_path(source_key, source_path)
     return if Tml.cache.enabled? and not Tml.session.inline_mode?
     return if extensions.nil? or extensions['sources'].nil?
@@ -207,6 +197,7 @@ class Tml::Application < Tml::Base
     @missing_keys_by_sources[source_path] ||= {}
   end
 
+  # Register missing keys
   def register_missing_key(source_key, tkey)
     return if Tml.cache.enabled? and not Tml.session.inline_mode?
     source_key = source_key.to_s
@@ -216,6 +207,7 @@ class Tml::Application < Tml::Base
     submit_missing_keys if Tml.config.submit_missing_keys_realtime
   end
 
+  # Register keys
   def register_keys(keys)
     params = []
     keys.each do |source_key, keys|
@@ -231,12 +223,14 @@ class Tml::Application < Tml::Base
     Tml.logger.error(e.backtrace)
   end
 
+  # Submit missing translation keys
   def submit_missing_keys
     return if @missing_keys_by_sources.nil? or @missing_keys_by_sources.empty?
     register_keys(@missing_keys_by_sources)
     @missing_keys_by_sources = nil
   end
 
+  # Reset translation cache
   def reset_translation_cache
     self.sources = {}
     self.translations = {}
@@ -244,11 +238,13 @@ class Tml::Application < Tml::Base
     @missing_keys_by_sources  = nil
   end
 
+  # Check if a key is ignored
   def ignored_key?(key)
     return false if ignored_keys.nil?
     not ignored_keys.index(key).nil?
   end
 
+  # Fetch translations from API
   def fetch_translations(locale)
     self.translations ||= {}
     self.translations[locale] ||= begin
@@ -283,6 +279,7 @@ class Tml::Application < Tml::Base
     {}
   end
 
+  # Cache translations within application object
   def cache_translations(locale, key, new_translations)
     self.translations ||= {}
     self.translations[locale] ||= {}
@@ -295,11 +292,13 @@ class Tml::Application < Tml::Base
     end
   end
 
+  # Get application cached translations
   def cached_translations(locale, key)
     return unless self.translations and self.translations[locale]
     self.translations[locale][key]
   end
 
+  # Debug translations
   def debug_translations
     return 'no translations' unless self.translations
     self.translations.each do |locale, keys|
@@ -311,20 +310,24 @@ class Tml::Application < Tml::Base
     end
   end
 
+  # Get default decoration token
   def default_decoration_token(token)
     hash_value(tokens, "decoration.#{token.to_s}")
   end
 
+  # Get default data token
   def default_data_token(token)
     hash_value(tokens, "data.#{token.to_s}")
   end
 
+  # Check if feature is enabled
   def feature_enabled?(key)
     hash_value(features, key.to_s)
   end
 
+  # Create API client
   def api_client
-    @api_client ||= Tml.config.api_client_class.new(application: self)
+    @api_client ||= Tml.config.api_client[:class].new(application: self)
   end
 
 end
