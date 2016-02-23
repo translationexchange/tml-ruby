@@ -81,7 +81,6 @@ class Tml::Api::Client < Tml::Base
   # get cache version from CDN
   def get_cache_version
     t = Tml::Utils.interval_timestamp(Tml.config.version_check_interval)
-    Tml.logger.debug("Fetching cache version from CDN with timestamp: #{t}")
 
     data = get_from_cdn('version', {t: t}, {public: true, uncompressed: true})
 
@@ -105,7 +104,7 @@ class Tml::Api::Client < Tml::Base
       Tml.cache.version.set(current_version)
     end
 
-    Tml.logger.info("Version: #{Tml.cache.version}")
+    Tml.logger.info("Cache Version: #{Tml.cache.version}")
   end
 
   # cdn_connection
@@ -178,7 +177,7 @@ class Tml::Api::Client < Tml::Base
   end
 
   # checks if cache is enable
-  def enable_cache?(opts)
+  def cache_enabled?(opts)
     # only gets ever get cached
     return false unless opts[:method] == :get
     return false if opts[:cache_key].nil?
@@ -186,31 +185,29 @@ class Tml::Api::Client < Tml::Base
     true
   end
 
+  # checks mode and cache, and fetches data
   def api(path, params = {}, opts = {})
-    # inline mode should always bypass API calls
+    # inline mode should always use API calls
     if live_api_request?
-      process_response(execute_request(path, params, opts), opts)
-    else
-      # get request uses local cache, then CDN
-      data = nil
-      if enable_cache?(opts)
-        verify_cache_version
-        unless Tml.cache.version.invalid?
-          data = Tml.cache.fetch(opts[:cache_key]) do
-            if Tml.cache.read_only?
-              # read only cache is either there, or no data
-              nil
-            else
-              # get date from the CDN
-              get_from_cdn(opts[:cache_key])
-            end
-          end
-        end
-      end
-      process_response(data, opts)
+      return process_response(execute_request(path, params, opts), opts)
     end
+
+    return unless cache_enabled?(opts)
+
+    # ensure the cache version is not outdated
+    verify_cache_version
+
+    return if Tml.cache.version.invalid?
+
+    # get request uses local cache, then CDN
+    data = Tml.cache.fetch(opts[:cache_key]) do
+      Tml.cache.read_only? ? nil : get_from_cdn(opts[:cache_key])
+    end
+
+    process_response(data, opts)
   end
 
+  # paginates through API results
   def paginate(path, params = {}, opts = {})
     data = get(path, params, opts.merge({'raw' => true}))
 
@@ -231,20 +228,23 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  # prepares API path
   def prepare_api_path(path)
     return path if path.match(/^https?:\/\//)
     "#{API_PATH}#{path[0] == '/' ? '' : '/'}#{path}"
   end
 
+  # prepares request
   def prepare_request(request, path, params)
-    request.options.timeout = 5
-    request.options.open_timeout = 2
+    request.options.timeout             = Tml.config.api_client[:timeout]
+    request.options.open_timeout        = Tml.config.api_client[:open_timeout]
     request.headers['User-Agent']       = "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION})"
     request.headers['Accept']           = 'application/json'
     request.headers['Accept-Encoding']  = 'gzip, deflate'
     request.url(path, params)
   end
 
+  # execute API request
   def execute_request(path, params = {}, opts = {})
     response = nil
     error = nil
@@ -311,11 +311,13 @@ class Tml::Api::Client < Tml::Base
     data
   end
 
+  # get object class from options
   def object_class(opts)
     return unless opts[:class]
     opts[:class].is_a?(String) ? opts[:class].constantize : opts[:class]
   end
 
+  # process API response
   def process_response(data, opts)
     return nil if data.nil?
     return data if opts[:raw] or opts[:raw_json]
@@ -334,6 +336,7 @@ class Tml::Api::Client < Tml::Base
     object_class(opts).new(data.merge(opts[:attributes] || {}))
   end
 
+  # convert params to query
   def to_query(hash)
     query = []
     hash.each do |key, value|
@@ -342,10 +345,13 @@ class Tml::Api::Client < Tml::Base
     query.join('&')
   end
 
+  # trace api call for logging
   def trace_api_call(path, params, opts = {})
-    #[:access_token].each do |param|
-    #  params = params.merge(param => "##filtered##") if params[param]
-    #end
+    if Tml.config.logger[:secure]
+      [:access_token].each do |param|
+        params = params.merge(param => "##filtered##") if params[param]
+      end
+    end
 
     path = "#{path[0] == '/' ? '' : '/'}#{path}"
 
