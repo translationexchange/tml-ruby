@@ -63,6 +63,8 @@ module Tml
     def validate_cache_version(version)
       return version unless version.is_a?(Hash)
       return 'undefined' unless version['t'].is_a?(Numeric)
+      return version['version'] if cache.read_only?
+
       expires_at = version['t'] + Tml.config.version_check_interval
       if expires_at < Time.now.to_i
         Tml.logger.debug('Cache version is outdated, needs refresh')
@@ -100,6 +102,7 @@ module Tml
       version.nil? or version == 'undefined'
     end
 
+    # checks if version is defined
     def defined?
       not undefined?
     end
