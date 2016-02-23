@@ -54,6 +54,7 @@ class Tml::Language < Tml::Base
     self
   end
 
+  # update language attributes
   def update_attributes(attrs)
     super
 
@@ -127,7 +128,6 @@ class Tml::Language < Tml::Base
   #   or
   # tr(:label => label, :description => "", :tokens => {}, :options => {})
   ########################################################################################################
-
   def translate(label, description = nil, tokens = {}, options = {})
     params = Tml::Utils.normalize_tr_params(label, description, tokens, options)
     return params[:label] if params[:label].to_s.strip == '' or params[:label].index('tml:label')
@@ -205,6 +205,7 @@ class Tml::Language < Tml::Base
   end
   alias :tr :translate
 
+  # build source path to the block
   def source_path
     sp = []
 
