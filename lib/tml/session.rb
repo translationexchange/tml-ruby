@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange, Inc
+# Copyright (c) 2016           Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -33,7 +33,7 @@
 module Tml
 
   def self.session
-    Thread.current[:session] ||= Tml::Session.new
+    Thread.current[:tml_context] ||= Tml::Session.new
   end
 
   class Session
@@ -44,8 +44,9 @@ module Tml
       return if Tml.config.disabled?
 
       key   = opts[:key]    || Tml.config.application[:key]
-      token = opts[:token]  || Tml.config.application[:token]
       host  = opts[:host]   || Tml.config.application[:host]
+      # token = opts[:token]  || Tml.config.application[:token]
+      token = opts[:access_token]
 
       Tml.cache.reset_version
 
@@ -53,6 +54,8 @@ module Tml
       self.current_source = opts[:source] || 'index'
       self.current_locale = opts[:locale]
       self.current_translator = opts[:translator]
+
+      # Tml.logger.debug(opts.inspect)
 
       self.application = Tml::Application.new(:key => key, :access_token => token, :host => host).fetch
 

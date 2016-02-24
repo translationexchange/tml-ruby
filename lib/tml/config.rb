@@ -80,19 +80,24 @@ module Tml
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
-    attr_accessor :invalidator, :agent, :api_client_class
+    attr_accessor :invalidator, :agent, :api_client
 
     # Used for IRB only
     attr_accessor :submit_missing_keys_realtime
 
     def initialize
       @enabled = true
-      @api_client_class = Tml::Api::Client
       @default_level  = 0
       @format = :html
       @subdomains = false
       @auto_init = true
       @source_separator = '@:@'
+
+      @api_client = {
+          class: Tml::Api::Client,
+          timeout: 5,
+          open_timeout: 2
+      }
 
       @locale = {
         default:    'en',
@@ -196,14 +201,13 @@ module Tml
         },
       }
 
-      @logger  = {
-        :enabled  => false,
-        :path     => './log/tml.log',
-        :level    => 'debug'
-      }
+      @cache = nil
 
-      @cache = {
-        :enabled  => false
+      @logger  = {
+        :enabled        => false,
+        :path           => './log/tml.log',
+        :level          => 'debug',
+        :secure         => true
       }
 
       @default_tokens = {
@@ -356,7 +360,7 @@ module Tml
     end
 
     def cache_enabled?
-      cache[:enabled].nil? || Tml.config.cache[:enabled]
+       not cache.nil?
     end
 
     #########################################################

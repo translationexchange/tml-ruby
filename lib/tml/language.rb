@@ -54,6 +54,7 @@ class Tml::Language < Tml::Base
     self
   end
 
+  # update language attributes
   def update_attributes(attrs)
     super
 
@@ -127,7 +128,6 @@ class Tml::Language < Tml::Base
   #   or
   # tr(:label => label, :description => "", :tokens => {}, :options => {})
   ########################################################################################################
-
   def translate(label, description = nil, tokens = {}, options = {})
     params = Tml::Utils.normalize_tr_params(label, description, tokens, options)
     return params[:label] if params[:label].to_s.strip == '' or params[:label].index('tml:label')
@@ -164,8 +164,9 @@ class Tml::Language < Tml::Base
       return translation_key.translate(self, params[:tokens], params[:options]).tml_translated
     end
 
-    # each key translations will be loaded directly from the API
+    # each key translations will be loaded directly from the API, and registered against "manual" source
     if Tml.session.block_option(:by_key)
+      application.register_missing_key(:manual, translation_key)
       translation_key.fetch_translations(locale)
       return translation_key.translate(self, params[:tokens], params[:options]).tml_translated
     end
@@ -181,7 +182,7 @@ class Tml::Language < Tml::Base
       application.verify_source_path(source_key, current_source_path)
     end
 
-    # Tml.logger.debug("#{params[:label]} : #{source_key}")
+    # Tml.logger.debug("#{self.locale} :  #{params[:label]} : #{source_key}")
 
     source = application.source(source_key, locale)
 
@@ -204,6 +205,7 @@ class Tml::Language < Tml::Base
   end
   alias :tr :translate
 
+  # build source path to the block
   def source_path
     sp = []
 

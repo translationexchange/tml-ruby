@@ -8,7 +8,7 @@ describe Tml::Config do
       expect(Tml.config.logger[:enabled]).to be_falsey
       expect(Tml.config.enabled?).to be_truthy
       expect(Tml.config.default_locale).to eq("en")
-      expect(Tml.config.cache[:enabled]).to be_falsey
+      expect(Tml.config.cache).to be_nil
       expect(Tml.config.logger[:path]).to eq("./log/tml.log")
     end
   end

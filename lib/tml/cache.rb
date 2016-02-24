@@ -30,9 +30,13 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-module Tml
+require 'rubygems'
+require 'rubygems/package'
+require 'open-uri'
+require 'zlib'
+require 'fileutils'
 
-  CACHE_VERSION_KEY = 'current_version'
+module Tml
 
   def self.cache
     @cache ||= begin
@@ -48,41 +52,19 @@ module Tml
 
   class Cache
 
-    # Returns current cache version
+    # version object
     def version
-      @version
-    end
-
-    # sets the current version
-    def version=(new_version)
-      @version = new_version
+      @version ||= Tml::CacheVersion.new(self)
     end
 
     # resets current version
     def reset_version
-      @version = nil
+      version.reset
     end
 
     # upgrade current version
     def upgrade_version
-      store(CACHE_VERSION_KEY, {'version' => 'undefined'})
-      reset_version
-    end
-
-    # fetches the version from the cache
-    def fetch_version
-      @version ||= begin
-        v = fetch(CACHE_VERSION_KEY) do
-          {'version' => Tml.config.cache[:version] || 'undefined'}
-        end
-        v.is_a?(Hash) ? v['version'] : v
-      end
-    end
-
-    # stores the current version back in cache
-    def store_version(new_version)
-      @version = new_version
-      store(CACHE_VERSION_KEY, {'version' => new_version})
+      version.upgrade
     end
 
     # checks if Tml is enabled
@@ -114,12 +96,12 @@ module Tml
     # namespace of each cache key
     def namespace
       return '#' if Tml.config.disabled?
-      Tml.config.cache[:namespace] || Tml.config.access_token[0..5]
+      Tml.config.cache[:namespace] || Tml.config.application[:key][0..5]
     end
 
     # versioned name of cache key
     def versioned_key(key, opts = {})
-      "tml_#{namespace}#{CACHE_VERSION_KEY == key ? '' : "_v#{version}"}_#{key}"
+      version.versioned_key(key, namespace)
     end
 
     # fetches key from cache
@@ -148,6 +130,105 @@ module Tml
       # do nothing
     end
 
+    def extract_version(app, version = nil)
+      if version
+        Tml.cache.version.set(version.to_s)
+      else
+        version_data = app.api_client.get_from_cdn('version', {t: Time.now.to_i}, {uncompressed: true})
+
+        unless version_data
+          Tml.logger.debug('No releases have been generated yet. Please visit your Dashboard and publish translations.')
+          return
+        end
+
+        Tml.cache.version.set(version_data['version'])
+      end
+    end
+
+    # warmup cache
+    def warmup(version = nil)
+      t0 = Time.now
+      Tml.logger = Logger.new(STDOUT)
+
+      Tml.logger.debug('Starting cache warmup...')
+      app = Tml::Application.new(key: Tml.config.application[:key])
+      extract_version(app, version)
+
+      Tml.logger.debug("Warming Up Version: #{Tml.cache.version}")
+
+      application = app.api_client.get_from_cdn('application', {t: Time.now.to_i})
+      Tml.cache.store(Tml::Application.cache_key, application)
+
+      sources = app.api_client.get_from_cdn('sources', {t: Time.now.to_i}, {uncompressed: true})
+
+      application['languages'].each do |lang|
+        locale = lang['locale']
+        language = app.api_client.get_from_cdn("#{locale}/language", {t: Time.now.to_i})
+        Tml.cache.store(Tml::Language.cache_key(locale), language)
+
+        sources.each do |src|
+          source = app.api_client.get_from_cdn("#{locale}/sources/#{src}", {t: Time.now.to_i})
+          Tml.cache.store(Tml::Source.cache_key(locale, src), source)
+        end
+      end
+
+      t1 = Time.now
+      Tml.logger.debug("Cache warmup took #{t1-t0}s")
+    end
+
+    # default cache path
+    def default_cache_path
+      @cache_path ||= begin
+        path = Tml.config.cache[:path]
+        path ||= 'config/tml'
+        FileUtils.mkdir_p(path)
+        FileUtils.chmod(0777, path)
+        path
+      end
+    end
+
+    # downloads cache from the CDN
+    def download(cache_path = default_cache_path, version = nil)
+      t0 = Time.now
+      Tml.logger = Logger.new(STDOUT)
+
+      Tml.logger.debug('Starting cache download...')
+      app = Tml::Application.new(key: Tml.config.application[:key])
+      extract_version(app, version)
+
+      Tml.logger.debug("Downloading Version: #{Tml.cache.version}")
+
+      archive_name = "#{Tml.cache.version}.tar.gz"
+      path = "#{cache_path}/#{archive_name}"
+      url = "#{app.cdn_host}/#{Tml.config.application[:key]}/#{archive_name}"
+
+      Tml.logger.debug("Downloading cache file: #{url}")
+      open(path, 'wb') do |file|
+        file << open(url).read
+      end
+
+      Tml.logger.debug('Extracting cache file...')
+      version_path = "#{cache_path}/#{Tml.cache.version}"
+      Tml::Utils.untar(Tml::Utils.ungzip(File.new(path)), version_path)
+      Tml.logger.debug("Cache has been stored in #{version_path}")
+
+      File.unlink(path)
+
+      begin
+        current_path = 'current'
+        FileUtils.chdir(cache_path)
+        FileUtils.rm(current_path) if File.exist?(current_path)
+        FileUtils.ln_s(Tml.cache.version.to_s, current_path)
+        Tml.logger.debug("The new version #{Tml.cache.version} has been marked as current")
+      rescue Exception => ex
+        Tml.logger.debug("Could not generate current symlink to the cache path: #{ex.message}")
+      end
+
+      t1 = Time.now
+      Tml.logger.debug("Cache download took #{t1-t0}s")
+    end
+
+    # remove extensions
     def strip_extensions(data)
       if data.is_a?(Hash)
         data = data.dup

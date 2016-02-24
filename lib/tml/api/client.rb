@@ -39,31 +39,37 @@ class Tml::Api::Client < Tml::Base
 
   attributes :application
 
-  # get results from api
+  # get results from API
   def results(path, params = {}, opts = {})
     get(path, params, opts)['results']
   end
 
+  # get from API
   def get(path, params = {}, opts = {})
     api(path, params, opts.merge(:method => :get))
   end
 
+  # post to API
   def post(path, params = {}, opts = {})
     api(path, params, opts.merge(:method => :post))
   end
 
+  # put to API
   def put(path, params = {}, opts = {})
     api(path, params, opts.merge(:method => :put))
   end
 
+  # delete from API
   def delete(path, params = {}, opts = {})
     api(path, params, opts.merge(:method => :delete))
   end
 
+  # checks if there are any API errors
   def self.error?(data)
     not data['error'].nil?
   end
 
+  # API connection
   def connection
     @connection ||= Faraday.new(:url => application.host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
@@ -72,22 +78,34 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  # get cache version from CDN
   def get_cache_version
-    execute_request('projects/current/version', {}, {:raw => true})
-  end
+    data = get_from_cdn('version', {t: Time.now.to_i}, {public: true, uncompressed: true})
 
-  def verify_cache_version
-    return if Tml.cache.version and Tml.cache.version != 'undefined'
-
-    current_version = Tml.cache.fetch_version
-    if current_version == 'undefined'
-      Tml.cache.store_version(get_cache_version)
-    else
-      Tml.cache.version = current_version
+    unless data
+      Tml.logger.debug('No releases have been published yet')
+      return '0'
     end
-    Tml.logger.info("Version: #{Tml.cache.version}")
+
+    data['version']
   end
 
+  # verify cache version
+  def verify_cache_version
+    return if Tml.cache.version.defined?
+
+    current_version = Tml.cache.version.fetch
+
+    if current_version == 'undefined'
+      Tml.cache.version.store(get_cache_version)
+    else
+      Tml.cache.version.set(current_version)
+    end
+
+    Tml.logger.info("Cache Version: #{Tml.cache.version}")
+  end
+
+  # cdn_connection
   def cdn_connection
     @cdn_connection ||= Faraday.new(:url => application.cdn_host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
@@ -95,11 +113,21 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  # get from the CDN
   def get_from_cdn(key, params = {}, opts = {})
-    return nil if Tml.cache.version == 'undefined' || Tml.cache.version.to_s == '0'
+    if Tml.cache.version.invalid? and key != 'version'
+      return nil
+    end
 
     response = nil
-    cdn_path = "/#{application.key}/#{Tml.cache.version}/#{key}.json.gz"
+    cdn_path = "/#{application.key}"
+
+    if key == 'version'
+      cdn_path += "/#{key}.json"
+    else
+      cdn_path += "/#{Tml.cache.version.to_s}/#{key}.json#{opts[:uncompressed] ? '' : '.gz'}"
+    end
+
     trace_api_call(cdn_path, params, opts.merge(:host => application.cdn_host)) do
       begin
         response = cdn_connection.get do |request|
@@ -116,8 +144,12 @@ class Tml::Api::Client < Tml::Base
     compressed_data = response.body
     return if compressed_data.nil? or compressed_data == ''
 
-    data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
-    Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+    data = compressed_data
+
+    unless opts[:uncompressed]
+      data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
+      Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+    end
 
     begin
       data = JSON.parse(data)
@@ -128,39 +160,52 @@ class Tml::Api::Client < Tml::Base
     data
   end
 
-  def live_translations_request?(cache_key)
-    return if cache_key.blank?
-    return unless Tml.session.block_option(:live)
-    cache_key.index('sources') or cache_key.index('keys')
+  # access token
+  def access_token
+    application.token
   end
 
-  def enable_cache?(opts)
+  # should the API go to live server
+  def live_api_request?
+    # if no access token, never use live mode
+    return false if access_token.blank?
+
+    # if block is specifically asking for it or inline mode is activated
+    Tml.session.inline_mode? or Tml.session.block_option(:live)
+  end
+
+  # checks if cache is enable
+  def cache_enabled?(opts)
+    # only gets ever get cached
     return false unless opts[:method] == :get
     return false if opts[:cache_key].nil?
     return false unless Tml.cache.enabled?
-    return false if live_translations_request?(opts[:cache_key])
-    return false if Tml.session.inline_mode?
     true
   end
 
+  # checks mode and cache, and fetches data
   def api(path, params = {}, opts = {})
-    # inline mode should always bypass API calls
-    # get request uses local cache, then CDN, the API
-    if enable_cache?(opts)
-      verify_cache_version
-      data = Tml.cache.fetch(opts[:cache_key]) do
-        if Tml.cache.read_only?
-          nil
-        else
-          get_from_cdn(opts[:cache_key]) || execute_request(path, params, opts)
-        end
-      end
-      process_response(data, opts)
-    else
-      process_response(execute_request(path, params, opts), opts)
+    # inline mode should always use API calls
+    if live_api_request?
+      return process_response(execute_request(path, params, opts), opts)
     end
+
+    return unless cache_enabled?(opts)
+
+    # ensure the cache version is not outdated
+    verify_cache_version
+
+    return if Tml.cache.version.invalid?
+
+    # get request uses local cache, then CDN
+    data = Tml.cache.fetch(opts[:cache_key]) do
+      Tml.cache.read_only? ? nil : get_from_cdn(opts[:cache_key])
+    end
+
+    process_response(data, opts)
   end
 
+  # paginates through API results
   def paginate(path, params = {}, opts = {})
     data = get(path, params, opts.merge({'raw' => true}))
 
@@ -181,31 +226,35 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  # prepares API path
   def prepare_api_path(path)
-    return path if path.index('oauth')
     return path if path.match(/^https?:\/\//)
     "#{API_PATH}#{path[0] == '/' ? '' : '/'}#{path}"
   end
 
+  # prepares request
   def prepare_request(request, path, params)
-    request.options.timeout = 5
-    request.options.open_timeout = 2
+    request.options.timeout             = Tml.config.api_client[:timeout]
+    request.options.open_timeout        = Tml.config.api_client[:open_timeout]
     request.headers['User-Agent']       = "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION})"
     request.headers['Accept']           = 'application/json'
     request.headers['Accept-Encoding']  = 'gzip, deflate'
     request.url(path, params)
   end
 
+  # execute API request
   def execute_request(path, params = {}, opts = {})
     response = nil
     error = nil
 
-    # oauth path is separate from versioned APIs
     path = prepare_api_path(path)
-    params = params.merge(:access_token => application.token) unless path.index('oauth')
+
+    unless opts[:public]
+      params = params.merge(:access_token => access_token)
+    end
 
     if opts[:method] == :post
-      params = params.merge(:api_key => application.key)
+      params = params.merge(:app_id => application.key)
     end
 
     @compressed = false
@@ -235,7 +284,7 @@ class Tml::Api::Client < Tml::Base
       raise Tml::Exception.new("Error: #{response.body}")
     end
 
-    if @compressed
+    if @compressed and (not opts[:uncompressed])
       compressed_data = response.body
       return if compressed_data.nil? or compressed_data == ''
 
@@ -260,11 +309,13 @@ class Tml::Api::Client < Tml::Base
     data
   end
 
+  # get object class from options
   def object_class(opts)
     return unless opts[:class]
     opts[:class].is_a?(String) ? opts[:class].constantize : opts[:class]
   end
 
+  # process API response
   def process_response(data, opts)
     return nil if data.nil?
     return data if opts[:raw] or opts[:raw_json]
@@ -283,18 +334,22 @@ class Tml::Api::Client < Tml::Base
     object_class(opts).new(data.merge(opts[:attributes] || {}))
   end
 
+  # convert params to query
   def to_query(hash)
     query = []
     hash.each do |key, value|
-      query << "#{key}=#{value}"
+      query << "#{key.to_s}=#{value.to_s}"
     end
     query.join('&')
   end
 
+  # trace api call for logging
   def trace_api_call(path, params, opts = {})
-    #[:client_secret, :access_token].each do |param|
-    #  params = params.merge(param => "##filtered##") if params[param]
-    #end
+    if Tml.config.logger[:secure]
+      [:access_token].each do |param|
+        params = params.merge(param => "##filtered##") if params[param]
+      end
+    end
 
     path = "#{path[0] == '/' ? '' : '/'}#{path}"
 
