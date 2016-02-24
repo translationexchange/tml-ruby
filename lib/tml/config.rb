@@ -76,7 +76,7 @@ module Tml
   class Config
     # Configuration Attributes
     attr_accessor :enabled, :locale, :default_level, :format, :application, :context_rules, :logger, :cache, :default_tokens, :localization
-    attr_accessor :auto_init, :source_separator, :version_check_interval
+    attr_accessor :auto_init, :source_separator
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
@@ -92,7 +92,6 @@ module Tml
       @subdomains = false
       @auto_init = true
       @source_separator = '@:@'
-      @version_check_interval = 3600
 
       @api_client = {
           class: Tml::Api::Client,

@@ -80,9 +80,7 @@ class Tml::Api::Client < Tml::Base
 
   # get cache version from CDN
   def get_cache_version
-    t = Tml::Utils.interval_timestamp(Tml.config.version_check_interval)
-
-    data = get_from_cdn('version', {t: t}, {public: true, uncompressed: true})
+    data = get_from_cdn('version', {t: Time.now.to_i}, {public: true, uncompressed: true})
 
     unless data
       Tml.logger.debug('No releases have been published yet')

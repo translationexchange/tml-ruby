@@ -65,7 +65,7 @@ module Tml
       return 'undefined' unless version['t'].is_a?(Numeric)
       return version['version'] if cache.read_only?
 
-      expires_at = version['t'] + Tml.config.version_check_interval
+      expires_at = version['t'] + version_check_interval
       if expires_at < Time.now.to_i
         Tml.logger.debug('Cache version is outdated, needs refresh')
         'undefined'
@@ -86,9 +86,14 @@ module Tml
       end
     end
 
+    # how often should the cache be checked for
+    def version_check_interval
+      Tml.config.cache[:version_check_interval] || 3600
+    end
+
     # generates cache timestamp based on an interval
     def cache_timestamp
-      Tml::Utils.interval_timestamp(Tml.config.version_check_interval)
+      Tml::Utils.interval_timestamp(version_check_interval)
     end
 
     # stores the current version back in cache
