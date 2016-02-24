@@ -90,7 +90,7 @@ module Tml
     # namespace of each cache key
     def namespace
       return '#' if Tml.config.disabled?
-      Tml.config.cache[:namespace] || Tml.config.access_token[0..5]
+      Tml.config.cache[:namespace] || Tml.config.application[:key][0..5]
     end
 
     # versioned name of cache key
@@ -122,6 +122,35 @@ module Tml
     # clears cache
     def clear(opts = {})
       # do nothing
+    end
+
+    # warmup cache
+    def warmup
+      t0 = Time.now
+      Tml.logger.debug('Starting cache warmup...')
+      app = Tml::Application.new(key: Tml.config.application[:key])
+      version = app.api_client.get_from_cdn('version', {t: Time.now.to_i}, {uncompressed: true})
+      Tml.cache.version.set(version['version'])
+      Tml.logger.debug("Warming Up Version: #{Tml.cache.version}")
+
+      application = app.api_client.get_from_cdn('application', {t: Time.now.to_i})
+      Tml.cache.store(Tml::Application.cache_key, application)
+
+      sources = app.api_client.get_from_cdn('sources', {t: Time.now.to_i}, {uncompressed: true})
+
+      application['languages'].each do |lang|
+        locale = lang['locale']
+        language = app.api_client.get_from_cdn("#{locale}/language", {t: Time.now.to_i})
+        Tml.cache.store(Tml::Language.cache_key(locale), language)
+
+        sources.each do |src|
+          source = app.api_client.get_from_cdn("#{locale}/sources/#{src}", {t: Time.now.to_i})
+          Tml.cache.store(Tml::Source.cache_key(locale, src), source)
+        end
+      end
+
+      t1 = Time.now
+      Tml.logger.debug("Cache warmup took #{t1-t0}s")
     end
 
     # remove extensions

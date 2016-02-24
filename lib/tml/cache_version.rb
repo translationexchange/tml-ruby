@@ -119,7 +119,6 @@ module Tml
 
     # checks if the version is invalid
     def invalid?
-
       %w(undefined 0).include?(version.to_s)
     end
 

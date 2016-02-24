@@ -125,7 +125,7 @@ class Tml::Api::Client < Tml::Base
     if key == 'version'
       cdn_path += "/#{key}.json"
     else
-      cdn_path += "/#{Tml.cache.version.to_s}/#{key}.json.gz"
+      cdn_path += "/#{Tml.cache.version.to_s}/#{key}.json#{opts[:uncompressed] ? '' : '.gz'}"
     end
 
     trace_api_call(cdn_path, params, opts.merge(:host => application.cdn_host)) do
