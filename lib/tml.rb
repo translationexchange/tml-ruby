@@ -40,7 +40,7 @@ module Tml
   module Generators end
 end
 
-%w(tml/base.rb tml tml/api tml/rules_engine tml/tokens tml/tokenizers tml/decorators tml/cache_adapters tml/cache tml/cache/generators tml/ext tml/modules tml/generators).each do |f|
+%w(tml/base.rb tml tml/api tml/rules_engine tml/tokens tml/tokenizers tml/decorators tml/cache_adapters tml/cache tml/ext).each do |f|
   if f.index('.rb')
     require(File.expand_path(File.join(File.dirname(__FILE__), f)))
     next
