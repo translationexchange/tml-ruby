@@ -34,8 +34,8 @@ require 'faraday'
 
 class Tml::Application < Tml::Base
 
-  # CDN_HOST = 'https://cdn.translationexchange.com'
-  CDN_HOST = 'https://trex-snapshots.s3-us-west-1.amazonaws.com'
+  CDN_HOST = 'https://cdn.translationexchange.com'
+  # CDN_HOST = 'https://trex-snapshots.s3-us-west-1.amazonaws.com'
   API_HOST = 'https://api.translationexchange.com'
 
   attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level
