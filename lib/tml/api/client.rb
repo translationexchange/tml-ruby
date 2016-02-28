@@ -249,13 +249,7 @@ class Tml::Api::Client < Tml::Base
 
     path = prepare_api_path(path)
 
-    unless opts[:public]
-      params = params.merge(:access_token => access_token)
-    end
-
-    if opts[:method] == :post
-      params = params.merge(:app_id => application.key)
-    end
+    params = params.merge(:access_token => access_token, :app_id => application.key)
 
     @compressed = false
     trace_api_call(path, params, opts.merge(:host => application.host)) do
