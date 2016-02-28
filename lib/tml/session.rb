@@ -92,7 +92,7 @@ module Tml
     end
 
     def application
-      @application ||= Tml::Application.new(:host => Tml::Api::Client::API_HOST)
+      @application ||= Tml::Application.new
     end
 
     def source_language
