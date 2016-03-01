@@ -34,11 +34,11 @@ require 'faraday'
 
 class Tml::Application < Tml::Base
 
+  API_HOST = 'https://api.translationexchange.com'
   CDN_HOST = 'https://cdn.translationexchange.com'
   # CDN_HOST = 'https://trex-snapshots.s3-us-west-1.amazonaws.com'
-  API_HOST = 'https://api.translationexchange.com'
 
-  attributes :host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level
+  attributes :host, :cdn_host, :id, :key, :access_token,  :name, :description, :threshold, :default_locale, :default_level
   has_many :features, :languages, :languages_by_locale, :sources, :tokens, :css, :shortcuts, :translations, :extensions
   has_many :ignored_keys
 
@@ -61,7 +61,7 @@ class Tml::Application < Tml::Base
   end
 
   def cdn_host
-    CDN_HOST
+    super || CDN_HOST
   end
 
   # Fetches application definition from the service

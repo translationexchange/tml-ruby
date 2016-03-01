@@ -43,10 +43,10 @@ module Tml
     def init(opts = {})
       return if Tml.config.disabled?
 
-      key   = opts[:key]    || Tml.config.application[:key]
-      host  = opts[:host]   || Tml.config.application[:host]
-      # token = opts[:token]  || Tml.config.application[:token]
-      token = opts[:access_token]
+      key       = opts[:key]        || Tml.config.application[:key]
+      host      = opts[:host]       || Tml.config.application[:host]
+      cdn_host  = opts[:cdn_host]   || Tml.config.application[:cdn_host]
+      token     = opts[:access_token]
 
       Tml.cache.reset_version
 
@@ -57,7 +57,7 @@ module Tml
 
       # Tml.logger.debug(opts.inspect)
 
-      self.application = Tml::Application.new(:key => key, :access_token => token, :host => host).fetch
+      self.application = Tml::Application.new(:key => key, :access_token => token, :host => host, :cdn_host => cdn_host).fetch
 
       if self.current_translator
         self.current_translator.application = self.application
