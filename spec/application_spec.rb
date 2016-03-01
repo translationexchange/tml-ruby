@@ -35,7 +35,7 @@ require 'spec_helper'
 describe Tml::Application do
   describe '#configuration' do
     it 'sets class attributes' do
-      expect(Tml::Application.attributes).to eq([:host, :id, :key, :access_token,
+      expect(Tml::Application.attributes).to eq([:host, :cdn_host, :id, :key, :access_token,
                                                   :name, :description, :threshold, :default_locale, :default_level,
                                                   :features, :languages, :languages_by_locale, :sources, :tokens,
                                                   :css, :shortcuts, :translations, :extensions, :ignored_keys])
