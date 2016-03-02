@@ -17,6 +17,7 @@ describe Tml::Api::Client do
     context "application has api token" do
       before do
         allow(application).to receive(:token).and_return('token')
+        allow(Tml.session).to receive(:inline_mode?).and_return(false)
       end
 
       it "returns false by default" do
@@ -26,6 +27,7 @@ describe Tml::Api::Client do
       context "inline_mode" do
         before do
           allow(Tml.session).to receive(:inline_mode?).and_return(true)
+          allow(Tml.session).to receive(:block_option).with(:live).and_return(true)
         end
 
         it "returns true" do
@@ -35,6 +37,7 @@ describe Tml::Api::Client do
 
       context "has block_option(:live)" do
         before do
+          allow(Tml.session).to receive(:inline_mode?).and_return(false)
           allow(Tml.session).to receive(:block_option).with(:live).and_return(true)
         end
 
