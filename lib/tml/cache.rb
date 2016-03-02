@@ -41,7 +41,9 @@ module Tml
   def self.cache
     @cache ||= begin
       if Tml.config.cache_enabled?
-        klass = Tml::CacheAdapters.const_get(Tml.config.cache[:adapter].to_s.camelcase)
+        # .capitalize is not ideal, but .camelcase is not available in pure ruby.
+        # This works for the current class names.
+        klass = Tml::CacheAdapters.const_get(Tml.config.cache[:adapter].to_s.capitalize)
         klass.new
       else
         # blank implementation
