@@ -168,7 +168,7 @@ class Tml::Api::Client < Tml::Base
   # should the API go to live server
   def live_api_request?
     # if no access token, never use live mode
-    return false if access_token.blank?
+    return false if access_token.nil?
 
     # if block is specifically asking for it or inline mode is activated
     Tml.session.inline_mode? or Tml.session.block_option(:live)
