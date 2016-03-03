@@ -44,7 +44,7 @@ Gem::Specification.new do |gem|
   gem.summary     = 'Tml Core Classes'
   gem.description = 'Tml core classes that can be used by any Ruby framework'
 
-  gem.files       = Dir['{lib,config}/**/*'] + %w(LICENSE Rakefile README.md)
+  gem.files       = Dir['{lib,config,tasks}/**/*'] + %w(LICENSE Rakefile README.md)
   gem.licenses    = 'MIT-LICENSE'
 
   gem.add_dependency 'faraday', '~> 0.8'
