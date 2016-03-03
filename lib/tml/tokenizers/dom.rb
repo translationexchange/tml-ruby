@@ -109,7 +109,7 @@ module Tml
           sentences = Tml::Utils.split_sentences(tml)
           translation = tml
           sentences.each do |sentence|
-            sentence_translation = option('debug') ? debug_translation(sentence) : Tml.session.current_language.translate(sentence, tokens, options)
+            sentence_translation = option('debug') ? debug_translation(sentence) : Tml.session.current_language.translate(sentence, tokens, options.dup)
             translation = translation.gsub(sentence, sentence_translation)
           end
           reset_context
@@ -118,7 +118,7 @@ module Tml
 
         tml = tml.gsub(/[\n]/, '').gsub(/\s\s+/, ' ').strip
 
-        translation = option('debug') ? debug_translation(tml) : Tml.session.target_language.translate(tml, tokens, options)
+        translation = option('debug') ? debug_translation(tml) : Tml.session.target_language.translate(tml, tokens, options.dup)
         reset_context
         translation
       end
