@@ -37,7 +37,7 @@ module Tml
       attr_reader :label, :full_name, :short_name, :case_keys, :context_keys
 
       def self.expression
-        /(%?\{{1,2}\s*\w*\s*(:\s*\w+)*\s*(::\s*\w+)*\s*\}{1,2})/
+        /(%?\{{1,2}\s*\w+\s*(:\s*\w+)*\s*(::\s*\w+)*\s*\}{1,2})/
       end
 
       def self.parse(label, opts = {})

@@ -41,7 +41,7 @@
 
 class Tml::Tokens::Method < Tml::Tokens::Data
   def self.expression
-    /(%?\{{1,2}\s*[\w]*\.\w*\s*(:\s*\w+)*\s*(::\s*\w+)*\s*\}{1,2})/
+    /(%?\{{1,2}\s*[\w]+\.\w*\s*(:\s*\w+)*\s*(::\s*\w+)*\s*\}{1,2})/
   end
 
   def object_name
