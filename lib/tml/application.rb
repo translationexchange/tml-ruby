@@ -188,9 +188,17 @@ class Tml::Application < Tml::Base
     ).fetch_translations(locale)
   end
 
+  # checks if key registration is allowed
+  # currently it is based on user's inline mode
+  def allow_key_registration?
+    return if token.nil?
+    Tml.session.inline_mode?
+  end
+
   # Verify current source path
   def verify_source_path(source_key, source_path)
-    return if Tml.cache.enabled? and not Tml.session.inline_mode?
+    return unless allow_key_registration?
+
     return if extensions.nil? or extensions['sources'].nil?
     return unless extensions['sources'][source_key].nil?
     @missing_keys_by_sources ||= {}
@@ -199,7 +207,8 @@ class Tml::Application < Tml::Base
 
   # Register missing keys
   def register_missing_key(source_key, tkey)
-    return if Tml.cache.enabled? and not Tml.session.inline_mode?
+    return unless allow_key_registration?
+
     source_key = source_key.to_s
     @missing_keys_by_sources ||= {}
     @missing_keys_by_sources[source_key] ||= {}
@@ -208,11 +217,16 @@ class Tml::Application < Tml::Base
   end
 
   # Register keys
+  # TODO: make this async using a separate thread, like in:
+  # https://github.com/airbrake/airbrake-ruby/blob/master/lib/airbrake-ruby/async_sender.rb
   def register_keys(keys)
     params = []
     keys.each do |source_key, keys|
       source = Tml::Source.new(:source => source_key, :application => self)
-      params << {:source => source_key, :keys => keys.values.collect{|tkey| tkey.to_hash(:label, :description, :locale, :level)}}
+      params << {
+          :source => source_key,
+          :keys => keys.values.collect{|tkey| tkey.to_hash(:label, :description, :locale, :level)}
+      }
       source.reset_cache
     end
 
