@@ -43,10 +43,10 @@ module Tml
     def init(opts = {})
       return if Tml.config.disabled?
 
-      key       = opts[:key]        || Tml.config.application[:key]
-      host      = opts[:host]       || Tml.config.application[:host]
-      cdn_host  = opts[:cdn_host]   || Tml.config.application[:cdn_host]
-      token     = opts[:access_token]
+      key       = opts[:key]          || Tml.config.application[:key]
+      host      = opts[:host]         || Tml.config.application[:host]
+      cdn_host  = opts[:cdn_host]     || Tml.config.application[:cdn_host]
+      token     = opts[:access_token] || Tml.config.application[:token]
 
       Tml.cache.reset_version
 
