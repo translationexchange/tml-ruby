@@ -230,7 +230,9 @@ class Tml::Application < Tml::Base
       source.reset_cache
     end
 
-    api_client.post('sources/register_keys', {:source_keys => params.to_json})
+    Thread.new do
+      api_client.post('sources/register_keys', {:source_keys => params.to_json})
+    end
   rescue Tml::Exception => e
     Tml.logger.error('Failed to register missing translation keys...')
     Tml.logger.error(e)
