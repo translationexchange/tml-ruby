@@ -68,12 +68,12 @@ module Tml
       expires_at = version['t'] + version_check_interval
       if expires_at < Time.now.to_i
         Tml.logger.debug('Cache version is outdated, needs refresh')
-        'undefined'
-      else
-        delta = expires_at - Time.now.to_i
-        Tml.logger.debug("Cache version is up to date, expires in #{delta}s")
-        version['version']
+        return 'undefined'
       end
+
+      delta = expires_at - Time.now.to_i
+      Tml.logger.debug("Cache version is up to date, expires in #{delta}s")
+      version['version']
     end
 
     # fetches the version from the cache
