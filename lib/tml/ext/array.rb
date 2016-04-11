@@ -32,7 +32,7 @@
 class Array
 
   # translates an array of options for a select tag
-  def tro(description = '', options = {})
+  def translate_options(description = '', options = {})
     return [] if empty?
 
     options = options.merge(:skip_decorations => true)
@@ -47,6 +47,7 @@ class Array
       end
     end
   end
+  alias_method :tro, :translate_options
 
   # translates and joins all elements
   def translate_and_join(separator = ', ', description = '', options = {})
