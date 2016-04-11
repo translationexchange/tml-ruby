@@ -103,7 +103,7 @@ class Tml::Tokens::Transform < Tml::Tokens::Data
   # transform:  ["unsupported", {"male": "{$0}", "female": "{$1}", "other": "{$0}/{$1}"}]
   # results in: {"male": "Dorogoi", "female": "Dorogaya", "other": "Dorogoi/Dorogaya"}
   #
-  # token:      {actors:|| likes, like}
+  # token:      {actors || likes, like}
   # transform:  ["unsupported", {"one": "{$0}", "other": "{$1}"}]
   # results in: {"one": "likes", "other": "like"}
   def generate_value_map(params, context)
