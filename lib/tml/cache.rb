@@ -153,7 +153,7 @@ module Tml
       Tml.logger = Logger.new(STDOUT)
 
       Tml.logger.debug('Starting cache warmup...')
-      app = Tml::Application.new(key: Tml.config.application[:key])
+      app = Tml::Application.new(key: Tml.config.application[:key], cdn_host: Tml.config.application[:cdn_host])
       extract_version(app, version)
 
       Tml.logger.debug("Warming Up Version: #{Tml.cache.version}")
