@@ -195,7 +195,7 @@ module Tml
       Tml.logger = Logger.new(STDOUT)
 
       Tml.logger.debug('Starting cache download...')
-      app = Tml::Application.new(key: Tml.config.application[:key])
+      app = Tml::Application.new(key: Tml.config.application[:key], cdn_host: Tml.config.application[:cdn_host])
       extract_version(app, version)
 
       Tml.logger.debug("Downloading Version: #{Tml.cache.version}")
