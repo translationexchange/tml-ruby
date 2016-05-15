@@ -95,10 +95,14 @@ module Tml
       Tml.logger.warn("#{cache_name} - #{msg}")
     end
 
+    def namespace=(value)
+      @namespace = value
+    end
+
     # namespace of each cache key
     def namespace
       return '#' if Tml.config.disabled?
-      Tml.config.cache[:namespace] || Tml.config.application[:key][0..5]
+      @namespace || Tml.config.cache[:namespace] || Tml.config.application[:key][0..5]
     end
 
     # versioned name of cache key

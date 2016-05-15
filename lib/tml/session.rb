@@ -49,6 +49,7 @@ module Tml
       token     = opts[:access_token] || opts[:token] || Tml.config.application[:token]
 
       Tml.cache.reset_version
+      Tml.cache.namespace = opts[:namespace]
 
       self.current_user = opts[:user]
       self.current_source = opts[:source] || 'index'
