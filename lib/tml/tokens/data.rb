@@ -136,6 +136,7 @@ module Tml
       #   :separator => ', ',
       #   :joiner => 'and',
       #   :remainder => lambda{|elements| tr("#{count||other}", :count => elements.size)},
+      #   :translate => false,
       #   :expandable => true,
       #   :collapsable => true
       # })
@@ -254,7 +255,7 @@ module Tml
       def token_value_from_array_param(array, language, options)
         # if you provided an array, it better have some values
         if array.size < 2
-          return error("Invalid value for array token #{full_name} in #{label}")
+          return sanitize(array[0], array[0], language, options.merge(:safe => false))
         end
 
         # if the first value of an array is an array handle it here
@@ -277,6 +278,11 @@ module Tml
         # if second param is symbol, invoke the method on the object with the remaining values
         if array[1].is_a?(Symbol)
           return sanitize(array[0].send(array[1]), array[0], language, options.merge(:safe => false))
+        end
+
+        # if second param is a lambda
+        if array[1].is_a?(Proc)
+          return sanitize(array[1].call(array[0]), array[0], language, options.merge(:safe => false))
         end
 
         error("Invalid value for array token #{full_name} in #{label}")

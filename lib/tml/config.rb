@@ -289,19 +289,11 @@ module Tml
         }
       }
 
-      @invalidator ||= {
-          enabled: true,
-          path: '/tml/upgrade',
-          auth: lambda do |request|
-            request.params[:access_token] == application[:token]
-          end
-      }
-
       @localization = {
-        :default_day_names        =>  ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        :default_abbr_day_names   =>  ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-        :default_month_names      =>  ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-        :default_abbr_month_names =>  ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        :default_day_names        => %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday),
+        :default_abbr_day_names   => %w(Sun Mon Tue Wed Thu Fri Sat),
+        :default_month_names      => %w(January February March April May June July August September October November December),
+        :default_abbr_month_names => %w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec),
         :custom_date_formats      =>  {
           :default                => '%m/%d/%Y',            # 07/4/2008
           :short_numeric          => '%m/%d',               # 07/4

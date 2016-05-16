@@ -46,9 +46,10 @@ module Tml
       key       = opts[:key]          || Tml.config.application[:key]
       host      = opts[:host]         || Tml.config.application[:host]
       cdn_host  = opts[:cdn_host]     || Tml.config.application[:cdn_host]
-      token     = opts[:access_token] || Tml.config.application[:token]
+      token     = opts[:access_token] || opts[:token] || Tml.config.application[:token]
 
       Tml.cache.reset_version
+      Tml.cache.namespace = opts[:namespace]
 
       self.current_user = opts[:user]
       self.current_source = opts[:source] || 'index'
@@ -102,7 +103,8 @@ module Tml
 
     def target_language
       target_locale = block_option(:target_locale)
-      target_locale ? application.language(target_locale) : current_language
+      language = (target_locale ? application.language(target_locale) : current_language)
+      language || Tml.config.default_language
     end
 
     def inline_mode?

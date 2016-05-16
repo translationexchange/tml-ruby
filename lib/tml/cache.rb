@@ -95,10 +95,14 @@ module Tml
       Tml.logger.warn("#{cache_name} - #{msg}")
     end
 
+    def namespace=(value)
+      @namespace = value
+    end
+
     # namespace of each cache key
     def namespace
       return '#' if Tml.config.disabled?
-      Tml.config.cache[:namespace] || Tml.config.application[:key][0..5]
+      @namespace || Tml.config.cache[:namespace] || Tml.config.application[:key][0..5]
     end
 
     # versioned name of cache key
@@ -153,7 +157,7 @@ module Tml
       Tml.logger = Logger.new(STDOUT)
 
       Tml.logger.debug('Starting cache warmup...')
-      app = Tml::Application.new(key: Tml.config.application[:key])
+      app = Tml::Application.new(key: Tml.config.application[:key], cdn_host: Tml.config.application[:cdn_host])
       extract_version(app, version)
 
       Tml.logger.debug("Warming Up Version: #{Tml.cache.version}")
@@ -195,7 +199,7 @@ module Tml
       Tml.logger = Logger.new(STDOUT)
 
       Tml.logger.debug('Starting cache download...')
-      app = Tml::Application.new(key: Tml.config.application[:key])
+      app = Tml::Application.new(key: Tml.config.application[:key], cdn_host: Tml.config.application[:cdn_host])
       extract_version(app, version)
 
       Tml.logger.debug("Downloading Version: #{Tml.cache.version}")
