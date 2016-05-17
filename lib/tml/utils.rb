@@ -75,6 +75,12 @@ module Tml
       hash[key.to_s] || hash[key.to_sym]
     end
 
+    def self.remove_nils(hash)
+      return unless hash
+      proc = Proc.new { |k, v| v.kind_of?(Hash) ? (v.delete_if(&proc); nil) : v.blank? }
+      hash.delete_if(&proc)
+    end
+
     def self.load_json(file_path, env = nil)
       json = JSON.parse(File.read(file_path))
       return json if env.nil?

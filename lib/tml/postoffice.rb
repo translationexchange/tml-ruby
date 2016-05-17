@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange Inc. http://translationexchange.com
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -31,9 +31,69 @@
 #++
 
 module Tml
-  VERSION = '5.5.0'
 
-  def self.full_version
-    "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION})"
+  class << self
+    attr_accessor :postoffice
+  end
+
+  def self.postoffice
+    @postoffice ||= begin
+      po_config = Tml.config.postoffice || {}
+      Tml::Postoffice.new(
+        key:    po_config[:key],
+        token:  po_config[:token],
+        host:   po_config[:host]
+      )
+    end
+  end
+
+  class Postoffice < Tml::Base
+
+    PO_HOST = 'https://postoffice.translationexchange.com'
+    API_VERSION = 'v1'
+
+    attributes :host, :key, :access_token
+
+    # API host
+    def host
+      super || PO_HOST
+    end
+
+    # API token
+    def token
+      access_token
+    end
+
+    # Postoffice API client
+    def deliver(to, template, tokens = {}, options = {})
+      if key.blank?
+        Tml.logger.error("Failed to deliver #{template} to #{to} - PostOffice has not been configured")
+        return
+      end
+
+      Tml.logger.debug("Delivering #{template} to #{to}")
+      params = {
+        client_id: key,
+        template: template,
+        tokens: tokens,
+        to: to,
+        via: options[:via],
+        from: options[:from],
+        locale: options[:locale],
+        first_name: options[:first_name],
+        last_name: options[:last_name],
+        name: options[:name]
+      }
+      params = Tml::Utils.remove_nils(params)
+      api_client.execute_request("#{host}/api/#{API_VERSION}/deliver", params, {:method => :post})
+    end
+
+    private
+
+    # Create API client
+    def api_client
+      @api_client ||= Tml.config.api_client[:class].new(application: self)
+    end
+
   end
 end

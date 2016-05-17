@@ -43,22 +43,29 @@ module Tml
     def init(opts = {})
       return if Tml.config.disabled?
 
-      key       = opts[:key]          || Tml.config.application[:key]
-      host      = opts[:host]         || Tml.config.application[:host]
-      cdn_host  = opts[:cdn_host]     || Tml.config.application[:cdn_host]
-      token     = opts[:access_token] || opts[:token] || Tml.config.application[:token]
+      # Tml.logger.debug(opts.inspect)
 
       Tml.cache.reset_version
       Tml.cache.namespace = opts[:namespace]
 
+      init_application(opts)
+
+      self
+    end
+
+    def init_application(opts = {})
       self.current_user = opts[:user]
       self.current_source = opts[:source] || 'index'
       self.current_locale = opts[:locale]
       self.current_translator = opts[:translator]
 
-      # Tml.logger.debug(opts.inspect)
-
-      self.application = Tml::Application.new(:key => key, :access_token => token, :host => host, :cdn_host => cdn_host).fetch
+      app_config = Tml.config.application || {}
+      self.application = Tml::Application.new(
+          :key => opts[:key] || app_config[:key],
+          :access_token => opts[:access_token] || opts[:token] || app_config[:token],
+          :host => opts[:host] || app_config[:host],
+          :cdn_host => opts[:cdn_host] || app_config[:cdn_host]
+      ).fetch
 
       if self.current_translator
         self.current_translator.application = self.application
@@ -66,8 +73,6 @@ module Tml
 
       self.current_locale = preferred_locale(opts[:locale])
       self.current_language = self.application.current_language(self.current_locale)
-
-      self
     end
 
     def preferred_locale(locales)
