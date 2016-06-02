@@ -52,6 +52,7 @@ class Tml::Application < Tml::Base
     "#{locale}/translations"
   end
 
+  # Returns application token
   def token
     access_token
   end
@@ -136,12 +137,24 @@ class Tml::Application < Tml::Base
     end
   end
 
+  # Returns a list of application supported locales
+  def locales
+    @locales ||= languages.collect{|lang| lang.locale}
+  end
+
+  # Returns supported locale or fallback locale
+  def supported_locale(locale)
+    return default_locale if locale.to_s == ''
+    locale = Tml::Language.normalize_locale(locale)
+    unless locales.include?(locale)
+      locale = locale.split('-').first
+    end
+    locales.include?(locale) ? locale : default_locale
+  end
+
   # Returns language by locale
   def language(locale = nil)
-    locale = nil if locale and locale.strip == ''
-
-    locale ||= default_locale || Tml.config.default_locale
-    locale = locale.to_s
+    locale = supported_locale(locale)
 
     self.languages_by_locale ||= {}
     self.languages_by_locale[locale] ||= api_client.get("languages/#{locale}/definition", {
@@ -157,13 +170,10 @@ class Tml::Application < Tml::Base
   end
 
   # Normalizes and returns current language
+  # if locale is passed as nil, default locale will be used
   def current_language(locale)
     return Tml.config.default_language unless locale
-    locale = locale.gsub('_', '-') if locale
-    lang = language(locale)
-    lang ||= language(locale.split('-').first) if locale.index('-')
-    lang ||= Tml.config.default_language
-    lang
+    language(supported_locale(locale)) || Tml.config.default_language
   end
 
   # Adds a language to the application
@@ -174,11 +184,6 @@ class Tml::Application < Tml::Base
     self.languages << new_language
     self.languages_by_locale[new_language.locale] = new_language
     new_language
-  end
-
-  # Returns a list of application supported locales
-  def locales
-    @locales ||= languages.collect{|lang| lang.locale}
   end
 
   # Returns source by key
