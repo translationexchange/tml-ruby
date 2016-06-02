@@ -78,9 +78,14 @@ module Tml
     def preferred_locale(locales)
       return application.default_locale unless locales
       locales = locales.is_a?(String) ? locales.split(',') : locales
+
       locales.each do |locale|
+        locale = Tml::Language.normalize_locale(locale)
+        return locale if application.locales.include?(locale)
+        locale = locale.split('-').first
         return locale if application.locales.include?(locale)
       end
+
       application.default_locale
     end
 
