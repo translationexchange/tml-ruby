@@ -205,7 +205,8 @@ class Tml::Api::Client < Tml::Base
 
     # get request uses local cache, then CDN
     data = Tml.cache.fetch(opts[:cache_key]) do
-      Tml.cache.read_only? ? nil : get_from_cdn(opts[:cache_key])
+      fetched_data = get_from_cdn(opts[:cache_key]) unless Tml.cache.read_only?
+      fetched_data || {}
     end
 
     process_response(data, opts)
