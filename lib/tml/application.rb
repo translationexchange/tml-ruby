@@ -142,6 +142,11 @@ class Tml::Application < Tml::Base
     @locales ||= languages.collect{|lang| lang.locale}
   end
 
+  # Application or configuration default locale
+  def default_locale
+    self.attributes[:default_locale] || Tml.config.default_locale
+  end
+
   # Returns supported locale or fallback locale
   def supported_locale(locale)
     return default_locale if locale.to_s == ''

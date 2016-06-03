@@ -87,6 +87,10 @@ describe Tml::Application do
     end
 
     it 'should return valid locale' do
+      app = Tml::Application.new
+      expect(app.default_locale).to eq('en')
+      expect(@app.default_locale).to eq('en')
+
       expect(@app.supported_locale('en')).to eq('en')
       expect(@app.supported_locale('en-US')).to eq('en')
       expect(@app.supported_locale('ru-ru')).to eq('ru')
