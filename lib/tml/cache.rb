@@ -136,6 +136,7 @@ module Tml
       # do nothing
     end
 
+    # Pulls cache version from CDN
     def extract_version(app, version = nil)
       if version
         Tml.cache.version.set(version.to_s)
@@ -151,12 +152,55 @@ module Tml
       end
     end
 
-    # warmup cache
-    def warmup(version = nil)
+    # Warms up cache from CDN or local files
+    def warmup(version = nil, cache_path = nil)
+      if cache_path.nil?
+        warmup_from_cdn(version)
+      else
+        warmup_from_files(version, cache_path)
+      end
+    end
+
+    # Warms up cache from local files
+    def warmup_from_files(version = nil, cache_path = nil)
       t0 = Time.now
       Tml.logger = Logger.new(STDOUT)
 
-      Tml.logger.debug('Starting cache warmup...')
+      Tml.logger.debug('Starting cache warmup from local files...')
+      version ||= Tml.config.cache[:version]
+      cache_path ||= Tml.config.cache[:path]
+      cache_path = "#{cache_path}/#{version}"
+
+      Tml.cache.version.set(version.to_s)
+      Tml.logger.debug("Warming Up Version: #{Tml.cache.version}")
+
+      application = JSON.parse(File.read("#{cache_path}/application.json"))
+      Tml.cache.store(Tml::Application.cache_key, application)
+
+      sources = JSON.parse(File.read("#{cache_path}/sources.json"))
+
+      application['languages'].each do |lang|
+        locale = lang['locale']
+
+        language = JSON.parse(File.read("#{cache_path}/#{locale}/language.json"))
+        Tml.cache.store(Tml::Language.cache_key(locale), language)
+
+        sources.each do |src|
+          source = JSON.parse(File.read("#{cache_path}/#{locale}/sources/#{src}.json"))
+          Tml.cache.store(Tml::Source.cache_key(locale, src), source)
+        end
+      end
+
+      t1 = Time.now
+      Tml.logger.debug("Cache warmup took #{t1-t0}s")
+    end
+
+    # Warms up cache from CDN
+    def warmup_from_cdn(version = nil)
+      t0 = Time.now
+      Tml.logger = Logger.new(STDOUT)
+
+      Tml.logger.debug('Starting cache warmup from CDN...')
       app = Tml::Application.new(key: Tml.config.application[:key], cdn_host: Tml.config.application[:cdn_host])
       extract_version(app, version)
 
