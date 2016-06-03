@@ -61,6 +61,11 @@ module Tml
 
     # validate that current cache version hasn't expired
     def validate_cache_version(version)
+      # if cache version is hardcoded, use it
+      if Tml.config.cache[:version]
+        return Tml.config.cache[:version]
+      end
+
       return version unless version.is_a?(Hash)
       return 'undefined' unless version['t'].is_a?(Numeric)
       return version['version'] if cache.read_only?
