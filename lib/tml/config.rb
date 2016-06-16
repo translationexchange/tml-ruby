@@ -367,7 +367,7 @@ module Tml
     #end
 
     def default_locale
-      @locale[:default]
+      @locale[:default] || 'en'
     end
 
     def default_language
