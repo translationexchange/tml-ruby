@@ -49,8 +49,40 @@
 #
 #######################################################################
 
+module TmlExtensions
+  module Array
+    module TmlStuff
+      attr_accessor :token_type
+      attr_accessor :orig_token
+      attr_accessor :full_token
+      attr_accessor :parent_node
+    end
+  end
+end
+
+
+Array.include ::TmlExtensions::Array::TmlStuff
+
+class TmlCloseTagError < StandardError
+  attr_accessor :full_token
+  attr_accessor :err_tree
+  def initialize(message)
+    super(message)
+  end
+end
+
+
+
 module Tml
   module Tokenizers
+
+    class TokenArray < Array
+      attr_accessor :token_type
+      attr_accessor :orig_token
+      attr_accessor :full_token
+      attr_accessor :parent_node
+    end
+
     class Decoration
 
       attr_reader :tokens, :fragments, :context, :text, :opts
@@ -61,7 +93,9 @@ module Tml
       RE_SHORT_TOKEN_END   = '\]'
       RE_LONG_TOKEN_START  = '\[[\w]*\]'                       # [link]
       RE_LONG_TOKEN_END    = '\[\/[\w]*\]'                     # [/link]
+      RE_LONG_TOKEN1_END    = '\[\/([\w]*)\]'                     # [/link]
       RE_HTML_TOKEN_START  = '<[^\>]*>'                        # <link>
+      RE_HTML_TOKEN1_END    = '<\/([^\>]*)>'                      # </link>
       RE_HTML_TOKEN_END    = '<\/[^\>]*>'                      # </link>
       RE_TEXT              = '[^\[\]<>]+'                        # '[\w\s!.:{}\(\)\|,?]*'
 
@@ -77,60 +111,157 @@ module Tml
       end
 
       def tokenize
-        re = [RE_SHORT_TOKEN_START,
+        re = '(' + [RE_SHORT_TOKEN_START,
               RE_SHORT_TOKEN_END,
               RE_LONG_TOKEN_START,
-              RE_LONG_TOKEN_END,
+              RE_LONG_TOKEN1_END,
               RE_HTML_TOKEN_START,
-              RE_HTML_TOKEN_END,
-              RE_TEXT].join('|')
-        @fragments = text.scan(/#{re}/)
+              RE_HTML_TOKEN1_END,
+              RE_TEXT].join('|') + ')'
+        @fragments = text.scan(/#{re}/).map{|i| i.kind_of?(Array) ? i.shift : i }
         @tokens = []
       end
 
-      def parse
+      def parse(parent_node = nil)
         return @text unless fragments
         token = fragments.shift
 
         if token.match(/#{RE_SHORT_TOKEN_START}/)
-          return parse_tree(token.gsub(/[\[:]/, ''), :short)
+          name = token.gsub(/[\[:]/, '')
+          return token unless name
+
+          return parse_tree(name, :short, parent_node, token)
         end
 
         if token.match(/#{RE_LONG_TOKEN_START}/)
-          return parse_tree(token.gsub(/[\[\]]/, ''), :long)
+          name = token.gsub(/[\[\]]/, '')
+          return token unless name
+          return parse_tree(name, :long, parent_node, token)
         end
 
         if token.match(/#{RE_HTML_TOKEN_START}/)
           return token if token.index('/>')
-          return parse_tree(token.gsub(/[<>]/, '').split(' ').first, :html)
+          name = token.gsub(/[<>]/, '').split(' ').first
+          return token unless name
+          return parse_tree(name, :html, parent_node, token)
         end
 
         token.to_s
       end
 
-      def parse_tree(name, type = :short)
+      def get_tag_type(fragment, preferred_pattern, have_short_parents)
+        return unless fragment
+
+        if preferred_pattern
+          match = fragment.scan(preferred_pattern)
+          return { match: match, type: "preferred" } if match.any?
+        end
+
+        token_defs = [['html', /(#{RE_HTML_TOKEN1_END})/], ['long', /(#{RE_LONG_TOKEN1_END})/], ['short', /#{RE_SHORT_TOKEN_END}/]]
+
+
+        token_defs.each do |tok|
+          match = fragment.scan(tok[1])
+          return { match: match[0], type: tok[0] } if match.any? && tok[0] != 'short'
+          return { match: match, type: tok[0] } if match.any? && (tok[0] == 'short' && have_short_parents)
+        end
+        nil
+      end
+
+      def parse_tree(name, type, parent_node, orig_token)
         tree = [name]
+        tree.token_type = type
+        tree.orig_token = orig_token
+        tree.parent_node = parent_node
+        tree.full_token = type.to_s + '.' + name
+
         @tokens << name unless (@tokens.include?(name) or name == RESERVED_TOKEN)
 
-        if type == :short
-          first = true
-          until fragments.first.nil? or fragments.first.match(/#{RE_SHORT_TOKEN_END}/)
-            value = parse
-            if first and value.is_a?(String)
-              value = value.lstrip
-              first = false
-            end
-            tree << value
-          end
-        elsif type == :long
-          until fragments.first.nil? or fragments.first.match(/#{RE_LONG_TOKEN_END}/)
-            tree << parse
-          end
+        if type == :long
+          end_tag = /\[\/\s*#{name}\s*\]/
         elsif type == :html
-          until fragments.first.nil? or fragments.first.match(/#{RE_HTML_TOKEN_END}/)
-            tree << parse
-          end
+          end_tag = /<\/\s*#{name}\s*>/
+        else
+          end_tag = /#{RE_SHORT_TOKEN_END}/
         end
+
+        have_short_parents = false
+        temp_parent = parent_node
+        while temp_parent
+          if temp_parent.token_type == :short
+            have_short_parents = true
+            break
+          end
+          temp_parent = temp_parent.parent_node
+        end
+
+        match_any_end = -> (pattern = nil) {
+          @current = fragments.first
+          tag_match = get_tag_type(@current, pattern || end_tag, have_short_parents)
+          return unless tag_match
+
+          if tag_match[:type] == 'preferred'
+            return tag_match[:match]
+          else
+            temp_parent = tree.parent_node
+            while temp_parent
+              if tag_match[:type] == 'short'
+                full_name = nil
+              else
+                full_name = tag_match[:type] + '.' + tag_match[:match][1] || '' # doesn't work with short
+              end
+
+              matched_parent = tag_match[:type] != 'short' ? full_name == temp_parent.full_token : temp_parent.token_type == :short
+
+              if matched_parent
+                error = TmlCloseTagError.new("Could not find close tag, instead found parent #{temp_parent.full_token}")
+                error.err_tree = tree
+                error.full_token = tag_match[:match][1] ? full_name : temp_parent.full_token
+                raise error
+              end
+
+              temp_parent = temp_parent.parent_node
+            end
+          end
+        }
+        end_match = nil
+        end_matched = false
+
+        begin
+          if type == :short
+            first = true
+            while fragments.first && !(end_match = match_any_end.(/^\]$/))
+              value = parse(tree)
+              if first and value.is_a?(String)
+                value = value.lstrip
+                first = false
+              end
+              tree << value
+            end
+            if end_match
+              end_matched = true
+            end
+          else
+            while fragments.first && !(end_match = match_any_end.())
+             tree << parse(tree)
+            end
+            if end_match
+              end_matched = true
+            end
+          end
+        rescue TmlCloseTagError => err
+          if err.full_token == tree.full_token && tree != err.err_tree
+            tree.push(*err.err_tree)
+          else
+            if tree != err.err_tree
+              tree.push(*err.err_tree)
+            end
+            err.err_tree = tree
+            tree[0] = tree.orig_token
+            raise err
+          end
+
+      end
 
         fragments.shift
         tree

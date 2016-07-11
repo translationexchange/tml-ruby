@@ -34,7 +34,7 @@ module Tml
   module Tokens
     class Data
 
-      attr_reader :label, :full_name, :short_name, :case_keys, :context_keys
+      attr_reader :label, :full_name, :token_type, :short_name, :case_keys, :context_keys
 
       def self.expression
         /(%?\{{1,2}\s*\w+\s*(:\s*\w+)*\s*(::\s*\w+)*\s*\}{1,2})/
@@ -51,6 +51,7 @@ module Tml
       def initialize(label, token)
         @label = label
         @full_name = token
+        @token_type = self.class.name.split('::').last
         parse_elements
       end
 

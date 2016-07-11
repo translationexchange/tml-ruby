@@ -22,16 +22,8 @@ describe Tml::Tokenizers::Decoration do
       expect(dt.fragments).to eq(["[tml]", "<bold>", "Hello ", "<i>", "World", "</i>", "</bold>", "[/tml]"])
       expect(dt.parse).to eq(["tml", ["bold", "Hello ", ["i", "World"]]])
 
-      dt = Tml::Tokenizers::Decoration.new('[bold: Hello World')
-      expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello World', '[/tml]'])
-      expect(dt.parse).to eq(['tml', ['bold', 'Hello World']])
-
       dt = Tml::Tokenizers::Decoration.new('[bold: Hello [strong: World]]')
       expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello ', '[strong:', ' World', ']', ']', '[/tml]'])
-      expect(dt.parse).to eq(['tml', ['bold', 'Hello ', ['strong', 'World']]])
-
-      dt = Tml::Tokenizers::Decoration.new('[bold: Hello [strong: World]')
-      expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello ', '[strong:', ' World', ']', '[/tml]'])
       expect(dt.parse).to eq(['tml', ['bold', 'Hello ', ['strong', 'World']]])
 
       dt = Tml::Tokenizers::Decoration.new('[bold1: Hello [strong22: World]]')
@@ -42,10 +34,6 @@ describe Tml::Tokenizers::Decoration do
       expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello, ', '[strong:', ' how', ']', ' ', '[weak:', ' are', ']', ' you?', ']', '[/tml]'])
       expect(dt.parse).to eq(['tml', ['bold', 'Hello, ', ['strong', 'how'], ' ', ['weak', 'are'], ' you?']])
 
-      dt = Tml::Tokenizers::Decoration.new('[bold: Hello, [strong: how [weak: are] you?]')
-      expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello, ', '[strong:', ' how ', '[weak:', ' are', ']', ' you?', ']', '[/tml]'])
-      expect(dt.parse).to eq(['tml', ['bold', 'Hello, ', ['strong', 'how ', ['weak', 'are'], ' you?']]])
-
       dt = Tml::Tokenizers::Decoration.new('[link: you have [italic: [bold: {count}] messages] [light: in your mailbox]]')
       expect(dt.fragments).to eq(['[tml]', '[link:', ' you have ', '[italic:', ' ', '[bold:', ' {count}', ']', ' messages', ']', ' ', '[light:', ' in your mailbox', ']', ']', '[/tml]'])
       expect(dt.parse).to eq(['tml', ['link', 'you have ', ['italic', '', ['bold', '{count}'], ' messages'], ' ', ['light', 'in your mailbox']]])
@@ -54,6 +42,56 @@ describe Tml::Tokenizers::Decoration do
       expect(dt.fragments).to eq(['[tml]', '[link]', ' you have ', '[italic:', ' ', '[bold:', ' {count}', ']', ' messages', ']', ' ', '[light:', ' in your mailbox', ']', ' ', '[/link]', '[/tml]'])
       expect(dt.parse).to eq( ['tml', ['link', ' you have ', ['italic', '', ['bold', '{count}'], ' messages'], ' ', ['light', 'in your mailbox'], ' ']])
     end
+  end
+
+  describe "bad tags" do
+    it 'should correctly handle unclosed long tags' do
+      dt = Tml::Tokenizers::Decoration.new('[bold]Hello W[o]rld[/bold]')
+      # expect(dt.fragments).to eq(['[tml]', 'Hello World', '[/tml]'])
+      parsed = dt.parse
+      parsed.shift
+      expect(parsed).to eq([['bold', 'Hello W', '[o]', 'rld']])
+    end
+    it 'should correctly handle unclosed short tags' do
+      dt = Tml::Tokenizers::Decoration.new('[bold: Hello World')
+      expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello World', '[/tml]'])
+      expect(dt.parse).to eq(['tml', '[bold:', 'Hello World'])
+    end
+    it 'should correctly nest short tags within unclosed short tags' do
+      dt = Tml::Tokenizers::Decoration.new('[bold: Hello [strong: World]')
+      expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello ', '[strong:', ' World', ']', '[/tml]'])
+      expect(dt.parse).to eq(['tml', '[bold:', 'Hello ', ['strong', 'World']])
+    end
+    it 'should correctly nest multiple short tags within unclosed short tags' do
+      dt = Tml::Tokenizers::Decoration.new('[bold: Hello, [strong: how [weak: are] you?]')
+      expect(dt.fragments).to eq(['[tml]', '[bold:', ' Hello, ', '[strong:', ' how ', '[weak:', ' are', ']', ' you?', ']', '[/tml]'])
+      expect(dt.parse).to eq(['tml', '[bold:', 'Hello, ', ['strong', 'how ', ['weak', 'are'], ' you?']])
+    end
+    it 'should correctly handle unclosed html tags' do
+      dt = Tml::Tokenizers::Decoration.new('[bold]Hello W<o>rld[/bold]')
+      parsed = dt.parse
+      parsed.shift
+      expect(parsed).to eq([['bold', 'Hello W', '<o>', 'rld']])
+    end
+
+
+    ## THE FOLLOWING TESTS ARE WRONG! CLOSING TAG MISSING OPENING [ BRACKET
+    it 'should correctly unnest multiple levels of unclosed tags' do
+      dt = Tml::Tokenizers::Decoration.new('[bold]Hel[lo: W<o>rld[/bold')
+      parsed = dt.parse
+      parsed.shift
+      expect(parsed).to eq(['[bold]', 'Hel', '[lo:', 'W', '<o>', 'rld', '/bold'])
+    end
+
+    it 'should correctly handle unclosed long tags' do
+      dt = Tml::Tokenizers::Decoration.new('[span]Hello W[bold: o]rld[/span')
+      # expect(dt.fragments).to eq(['[tml]', 'Hello World', '[/tml]'])
+      parsed = dt.parse
+      parsed.shift
+      expect(parsed).to eq(['[span]', 'Hello W', ['bold', 'o'], 'rld', '/span'])
+    end
+
+
   end
 
   describe 'substitute' do

@@ -6,6 +6,7 @@ Encoding.default_internal = Encoding::UTF_8
 gem 'rake', '~> 10.4'
 gem 'rdoc', '~> 4.2'
 gem 'coveralls', '~> 0.8.10', require: false
+gem 'pry'
 
 group :test do
   gem 'memcache_mock'
