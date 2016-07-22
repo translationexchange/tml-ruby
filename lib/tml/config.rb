@@ -94,16 +94,25 @@ module Tml
       @source_separator = '@:@'
 
       @api_client = {
-          class: Tml::Api::Client,
-          timeout: 5,
-          open_timeout: 2
+        class: Tml::Api::Client,
+        timeout: 5,
+        open_timeout: 2
       }
 
       @locale = {
-        default:    'en',
-        method:     'current_locale',
-        subdomain:  false,
-        extension:  false
+        default:      'en',       # default locale
+        method:       'current_locale', # method to use for user selected locale, if nil, the rest will be a fallback
+        param:        'locale',   # the way to name the param
+        strategy:     'param',    # approach param, pre-path, pre-domain, custom-domain
+        redirect:     true,       # if TML should handle locale logic redirects
+        skip_default: false,      # if the default locales should not be visible
+        browser:      true,       # if you want to use a browser header to determine the locale
+        cookie:       true,       # if you want to store user selected locale in the cookie
+        default_host: '',         # if user wants to not display default locale, we need to know the default host
+        mapping: {                # domain to locale mapping
+          en: '',
+          ru: '',
+        }
       }
 
       @agent = {
@@ -240,7 +249,7 @@ module Tml
             :em     =>  '<em>{$0}</em>',
             :italic =>  '<i>{$0}</i>',
             :i      =>  '<i>{$0}</i>',
-            :link   =>  "<a href='{$href}'>{$0}</a>",
+            :link   =>  "<a href='{$href}' class='{$class}' style='{$style}' title='{$title}'>{$0}</a>",
             :br     =>  '<br>{$0}',
             :strike =>  '<strike>{$0}</strike>',
             :div    =>  "<div id='{$id}' class='{$class}' style='{$style}'>{$0}</div>",
