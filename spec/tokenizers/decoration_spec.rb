@@ -83,13 +83,21 @@ describe Tml::Tokenizers::Decoration do
       expect(dt.substitute).to eq("<a href=\"http://mail.google.com\">you have {count} messages</a>")
 
       dt = Tml::Tokenizers::Decoration.new("[link: you have 5 messages]", "link" => {href: "http://mail.google.com"})
-      expect(dt.substitute).to eq("<a href='http://mail.google.com'>you have 5 messages</a>")
+      expect(dt.substitute).to eq("<a href='http://mail.google.com' class='' style='' title=''>you have 5 messages</a>")
 
       dt = Tml::Tokenizers::Decoration.new("[link1: you have 5 messages]", "link1" => {href: "http://mail.google.com"})
-      expect(dt.substitute).to eq("<a href='http://mail.google.com'>you have 5 messages</a>")
+      expect(dt.substitute).to eq("<a href='http://mail.google.com' class='' style='' title=''>you have 5 messages</a>")
 
       dt = Tml::Tokenizers::Decoration.new("[link1: you have 5 messages]", link1: {href: "http://mail.google.com"})
-      expect(dt.substitute).to eq("<a href='http://mail.google.com'>you have 5 messages</a>")
+      expect(dt.substitute).to eq("<a href='http://mail.google.com' class='' style='' title=''>you have 5 messages</a>")
+    end
+  end
+
+  describe 'default decorations' do
+    it 'should be cleaned' do
+      html = '<a href="/newest/test" class="{$class}" style="{$style}" title="{$title}"></a>'
+      html = html.gsub(/\{\$[^}]*\}/, '')
+      expect(html).to eq('<a href="/newest/test" class="" style="" title=""></a>')
     end
   end
 
