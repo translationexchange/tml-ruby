@@ -76,7 +76,7 @@ module Tml
   class Config
     # Configuration Attributes
     attr_accessor :enabled, :locale, :default_level, :format, :application, :postoffice, :context_rules, :logger, :cache, :default_tokens, :localization
-    attr_accessor :auto_init, :source_separator
+    attr_accessor :auto_init, :source_separator, :domain
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
@@ -89,7 +89,6 @@ module Tml
       @enabled = true
       @default_level  = 0
       @format = :html
-      @subdomains = false
       @auto_init = true
       @source_separator = '@:@'
 
@@ -108,11 +107,11 @@ module Tml
         skip_default: false,      # if the default locales should not be visible
         browser:      true,       # if you want to use a browser header to determine the locale
         cookie:       true,       # if you want to store user selected locale in the cookie
-        default_host: '',         # if user wants to not display default locale, we need to know the default host
-        mapping: {                # domain to locale mapping
-          en: '',
-          ru: '',
-        }
+        # default_host: '',         # if user wants to not display default locale, we need to know the default host
+        # mapping: {                # domain to locale mapping
+        #   en: '',
+        #   ru: '',
+        # }
       }
 
       @agent = {
@@ -346,6 +345,41 @@ module Tml
 
     def disabled?
       not enabled?
+    end
+
+    def locale_expression
+      /^[a-z]{2}(-[A-Z]{2,3})?$/
+    end
+
+    def locale_strategy
+      locale[:strategy] || 'param'
+    end
+
+    def agent_locale_strategy
+      locale.merge(param: locale_param, mode: locale_strategy)
+    end
+
+    def locale_param
+      locale[:param] || 'locale'
+    end
+
+    def current_locale_method
+      locale[:method] || @current_locale_method
+    end
+
+    def locale_cookie_enabled?
+      if %w(pre-domain custom-domain).include?(locale[:strategy])
+        return false
+      end
+      locale[:cookie].nil? || locale[:cookie]
+    end
+
+    def locale_browser_enabled?
+      locale[:browser].nil? || locale[:browser]
+    end
+
+    def locale_redirect_enabled?
+      locale[:redirect].nil? || locale[:redirect]
     end
 
     def nested_value(hash, key, default_value = nil)
