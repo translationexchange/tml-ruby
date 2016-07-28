@@ -194,7 +194,7 @@ class Tml::Application < Tml::Base
   # Returns source by key
   def source(key, locale)
     self.sources ||= {}
-    self.sources[key] ||= Tml::Source.new(
+    self.sources["#{locale}/#{key}"] ||= Tml::Source.new(
       :application  => self,
       :source       => key
     ).fetch_translations(locale)
