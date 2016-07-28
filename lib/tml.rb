@@ -38,6 +38,30 @@ module Tml
   module Decorators end
   module CacheAdapters end
   module Generators end
+
+  def self.default_language
+    Tml.config.default_language
+  end
+
+  def self.current_language
+    Tml.session.current_language
+  end
+
+  def self.language(locale)
+    Tml.session.application.language(locale)
+  end
+
+  def self.translate(label, description = '', tokens = {}, options = {})
+    Tml.session.translate(label, description, tokens, options)
+  end
+
+  def self.with_options(opts)
+    Tml.session.with_options(opts) do
+      if block_given?
+        yield
+      end
+    end
+  end
 end
 
 %w(tml/base.rb tml tml/api tml/rules_engine tml/tokens tml/tokenizers tml/decorators tml/cache_adapters tml/cache tml/ext).each do |f|
