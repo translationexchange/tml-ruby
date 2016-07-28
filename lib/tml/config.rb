@@ -356,7 +356,7 @@ module Tml
     end
 
     def agent_locale_strategy
-      locale.merge(param: locale_param, mode: locale_strategy)
+      locale.merge(param: locale_param)
     end
 
     def locale_param
