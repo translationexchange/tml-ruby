@@ -50,7 +50,7 @@ class String
   end
 
   def tml_translated?
-    @tml_translated
+    @tml_translated || index('<tml:label')
   end
 
 end

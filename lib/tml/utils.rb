@@ -46,15 +46,15 @@ module Tml
           :label        => label,
           :description  => nil,
           :tokens       => description,
-          :options      => tokens
+          :options      => tokens || {}
         }
       end
 
       {
         :label        => label,
         :description  => description,
-        :tokens       => tokens,
-        :options      => options
+        :tokens       => tokens || {},
+        :options      => options || {}
       }
     end
 

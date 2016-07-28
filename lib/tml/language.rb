@@ -118,7 +118,8 @@ class Tml::Language < Tml::Base
   end
 
   def current_source(options)
-    (options[:source] || Tml.session.block_option(:source) || Tml.session.current_source || 'undefined').to_s
+    return options[:source] if options and options[:source]
+    (Tml.session.block_option(:source) || Tml.session.current_source || 'undefined').to_s
   end
 
   #######################################################################################################
@@ -181,7 +182,7 @@ class Tml::Language < Tml::Base
     end
 
     # fetch translations grouped by source
-    source_key = current_source(options)
+    source_key = current_source(params[:options])
     current_source_path = source_path
 
     # Dynamic sources are never registered under the parent source for fast retrieval

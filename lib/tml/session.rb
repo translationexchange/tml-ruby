@@ -121,6 +121,34 @@ module Tml
       current_translator and current_translator.inline?
     end
 
+    def translate(label, description = '', tokens = {}, options = {})
+      params = Tml::Utils.normalize_tr_params(label, description, tokens, options)
+      return params[:label] if params[:label].tml_translated?
+
+      params[:options][:caller] ||= caller
+
+      if Tml.config.disabled?
+        return Tml.config.default_language.translate(params[:label], params[:tokens], params[:options]).tml_translated
+      end
+
+      # Translate individual sentences
+      if params[:options][:split]
+        text = params[:label]
+        sentences = Tml::Utils.split_sentences(text)
+        sentences.each do |sentence|
+          text = text.gsub(sentence, target_language.translate(sentence, params[:description], params[:tokens], params[:options]))
+        end
+        return text.tml_translated
+      end
+
+      target_language.translate(params).tml_translated
+    rescue Tml::Exception => ex
+      #pp ex, ex.backtrace
+      Tml.logger.error(ex.message)
+      #Tml.logger.error(ex.message + "\n=> " + ex.backtrace.join("\n=> "))
+      label
+    end
+
     #########################################################
     ## Block Options
     #########################################################
@@ -161,6 +189,7 @@ module Tml
       pop_block_options
       ret
     end
+    alias_method :with_options, :with_block_options
 
   end
 end
