@@ -15,7 +15,7 @@ describe Tml::Utils do
       expect(
         Tml::Utils.normalize_tr_params("Hello {user}", {:user => "Michael"}, nil, nil)
       ).to eq(
-        {:label=>"Hello {user}", :description=>nil, :tokens=>{:user=>"Michael"}, :options=>nil}
+        {:label=>"Hello {user}", :description=>nil, :tokens=>{:user=>"Michael"}, :options=>{}}
       )
 
       expect(
