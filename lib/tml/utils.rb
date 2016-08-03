@@ -46,15 +46,15 @@ module Tml
           :label        => label,
           :description  => nil,
           :tokens       => description,
-          :options      => tokens
+          :options      => tokens || {}
         }
       end
 
       {
         :label        => label,
         :description  => description,
-        :tokens       => tokens,
-        :options      => options
+        :tokens       => tokens || {},
+        :options      => options || {}
       }
     end
 
@@ -73,6 +73,12 @@ module Tml
 
     def self.hash_value(hash, key)
       hash[key.to_s] || hash[key.to_sym]
+    end
+
+    def self.remove_nils(hash)
+      return unless hash
+      proc = Proc.new { |k, v| v.kind_of?(Hash) ? (v.delete_if(&proc); nil) : v.blank? }
+      hash.delete_if(&proc)
     end
 
     def self.load_json(file_path, env = nil)

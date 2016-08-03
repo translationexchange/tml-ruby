@@ -290,9 +290,11 @@ module Tml
 
       ##############################################################################
       #
+      # Hashes are often used with JSON structures. We can be smart about how to pull default values.
+      #
       # examples:
       #
-      # tr("Hello {user}", {:user => {:value => "Michael", :gender => :male}}}
+      # tr("Hello {user}", {:user => {:name => "Michael", :gender => :male}}}
       #
       # tr("Hello {user}", {:user => {:object => {:gender => :male}, :value => "Michael"}}}
       # tr("Hello {user}", {:user => {:object => {:name => "Michael", :gender => :male}, :property => :name}}}
@@ -306,6 +308,13 @@ module Tml
 
       def token_value_from_hash_param(hash, language, options)
         value = Tml::Utils.hash_value(hash, :value)
+        [:name, :first_name, :display_name, :full_name, :username].each do |attr|
+          value ||= Tml::Utils.hash_value(hash, attr)
+        end
+
+        attr  = Tml::Utils.hash_value(hash, :attribute) || Tml::Utils.hash_value(hash, :property)
+        value ||= Tml::Utils.hash_value(hash, attr)
+
         object = Tml::Utils.hash_value(hash, :object)
 
         unless value.nil?
@@ -315,8 +324,6 @@ module Tml
         if object.nil?
           return error("Missing value for hash token #{full_name} in #{label}")
         end
-
-        attr  = Tml::Utils.hash_value(hash, :attribute) || Tml::Utils.hash_value(hash, :property)
 
         if object.is_a?(Hash)
           unless attr.nil?

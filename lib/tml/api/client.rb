@@ -69,9 +69,14 @@ class Tml::Api::Client < Tml::Base
     not data['error'].nil?
   end
 
+  # API Host
+  def host
+    application.host
+  end
+
   # API connection
   def connection
-    @connection ||= Faraday.new(:url => application.host) do |faraday|
+    @connection ||= Faraday.new(:url => host) do |faraday|
       faraday.request(:url_encoded)               # form-encode POST params
       # faraday.response :logger                  # log requests to STDOUT
       faraday.adapter(Faraday.default_adapter)    # make requests with Net::HTTP
@@ -187,6 +192,7 @@ class Tml::Api::Client < Tml::Base
   def api(path, params = {}, opts = {})
     # inline mode should always use API calls
     if live_api_request?
+      params = params.merge(:access_token => access_token, :app_id => application.key)
       return process_response(execute_request(path, params, opts), opts)
     end
 
@@ -199,7 +205,8 @@ class Tml::Api::Client < Tml::Base
 
     # get request uses local cache, then CDN
     data = Tml.cache.fetch(opts[:cache_key]) do
-      Tml.cache.read_only? ? nil : get_from_cdn(opts[:cache_key])
+      fetched_data = get_from_cdn(opts[:cache_key]) unless Tml.cache.read_only?
+      fetched_data || {}
     end
 
     process_response(data, opts)
@@ -249,10 +256,8 @@ class Tml::Api::Client < Tml::Base
 
     path = prepare_api_path(path)
 
-    params = params.merge(:access_token => access_token, :app_id => application.key)
-
     @compressed = false
-    trace_api_call(path, params, opts.merge(:host => application.host)) do
+    trace_api_call(path, params, opts.merge(:host => host)) do
       begin
         if opts[:method] == :post
           response = connection.post(path, params)

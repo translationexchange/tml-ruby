@@ -47,12 +47,14 @@ execute("gem install tml-#{version}.gem --no-ri --no-rdoc")
 
 if ARGV.include?('release')
   execute("git tag #{version}")
-  execute('git push')
+  execute('git push --tags')
+
   execute("gem push tml-#{version}.gem")
 
   execute('git checkout develop')
 
   increment_version
+
   execute("git add #{version_file_path}")
   execute("git commit -m 'Updated version to #{version}'")
   execute('git push')

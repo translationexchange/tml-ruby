@@ -155,6 +155,8 @@ module Tml
           end
         end
 
+        # remove unused attributes
+        default_decoration = default_decoration.gsub(/\{\$[^}]*\}/, '')
         default_decoration
       end
 

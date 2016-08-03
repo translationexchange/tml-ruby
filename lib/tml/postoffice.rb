@@ -1,5 +1,6 @@
+# encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange Inc. http://translationexchange.com
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -29,28 +30,70 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-class String
+module Tml
 
-  def translate(desc = '', tokens = {}, options = {})
-    Tml.session.target_language.translate(
-        Tml::Utils.normalize_tr_params(self, desc, tokens, options)
-    )
+  class << self
+    attr_accessor :postoffice
   end
 
-  def trl(desc = '', tokens = {}, options = {})
-    Tml.session.target_language.translate(
-        Tml::Utils.normalize_tr_params(self, desc, tokens, options.merge(:skip_decorations => true))
-    )
+  def self.postoffice
+    @postoffice ||= begin
+      po_config = Tml.config.postoffice || {}
+      Tml::Postoffice.new(
+        key:    po_config[:key],
+        token:  po_config[:token],
+        host:   po_config[:host]
+      )
+    end
   end
 
-  def tml_translated
-    return self if frozen?
-    @tml_translated = true
-    self
-  end
+  class Postoffice < Tml::Base
 
-  def tml_translated?
-    @tml_translated || index('<tml:label')
-  end
+    PO_HOST = 'https://postoffice.translationexchange.com'
+    API_VERSION = 'v1'
 
+    attributes :host, :key, :access_token
+
+    # API host
+    def host
+      super || PO_HOST
+    end
+
+    # API token
+    def token
+      access_token
+    end
+
+    # Postoffice API client
+    def deliver(to, template, tokens = {}, options = {})
+      if key.blank?
+        Tml.logger.error("Failed to deliver #{template} to #{to} - PostOffice has not been configured")
+        return
+      end
+
+      Tml.logger.debug("Delivering #{template} to #{to}")
+      params = {
+        client_id: key,
+        template: template,
+        tokens: tokens,
+        to: to,
+        via: options[:via],
+        from: options[:from],
+        locale: options[:locale],
+        first_name: options[:first_name],
+        last_name: options[:last_name],
+        name: options[:name]
+      }
+      params = Tml::Utils.remove_nils(params)
+      api_client.execute_request("#{host}/api/#{API_VERSION}/deliver", params, {:method => :post})
+    end
+
+    private
+
+    # Create API client
+    def api_client
+      @api_client ||= Tml.config.api_client[:class].new(application: self)
+    end
+
+  end
 end

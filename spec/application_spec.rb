@@ -47,6 +47,16 @@ describe Tml::Application do
       @app = init_application
     end
 
+    it 'should have correct cache key' do
+      expect(Tml::Application.cache_key).to eq('application')
+      expect(Tml::Application.translations_cache_key('ru')).to eq('ru/translations')
+    end
+
+    it 'should have correct CDN and API urls' do
+      expect(@app.host).to eq(Tml::Application::API_HOST)
+      expect(@app.cdn_host).to eq(Tml::Application::CDN_HOST)
+    end
+
     it 'loads application attributes' do
       expect(@app.key).to eq('default')
       expect(@app.name).to eq('Tml Translation Service')
@@ -59,7 +69,7 @@ describe Tml::Application do
     end
 
     it 'loads application language' do
-      expect(@app.languages.size).to eq(14)
+      expect(@app.languages.size).to eq(15)
 
       russian = @app.language('ru')
       expect(russian.locale).to eq('ru')
@@ -76,7 +86,19 @@ describe Tml::Application do
       @app.register_missing_key('test', Tml::TranslationKey.new(:application => @app, :label => 'Hello'))
     end
 
+    it 'should return valid locale' do
+      app = Tml::Application.new
+      expect(app.default_locale).to eq('en')
+      expect(@app.default_locale).to eq('en')
+
+      expect(@app.supported_locale('en')).to eq('en')
+      expect(@app.supported_locale('en-US')).to eq('en')
+      expect(@app.supported_locale('ru-ru')).to eq('ru')
+      expect(@app.supported_locale('de')).to eq('de')
+      expect(@app.supported_locale('de-de')).to eq('de-DE')
+      expect(@app.supported_locale('de-DE')).to eq('de-DE')
+      expect(@app.supported_locale('it')).to eq('en')
+    end
+
   end
-
-
 end

@@ -14,7 +14,7 @@ namespace :tml do
 
       desc 'warms up dynamic cache'
       task :warmup => :environment do
-        Tml.cache.warmup
+        Tml.cache.warmup(ENV['version'], ENV['path'])
       end
     end
 
@@ -23,9 +23,12 @@ namespace :tml do
       ## Local Cache Management
       ##########################################
 
-      desc 'downloads local file cache'
+      desc 'downloads file cache to local storage'
       task :download => :environment do
-        Tml.cache.download
+        cache_path = ENV['path'] || Tml.cache.default_cache_path
+        version = ENV['version']
+        pp "Downloading #{version} to #{cache_path}..."
+        Tml.cache.download(cache_path, version)
       end
 
       desc 'rolls back to the previous version'
