@@ -75,7 +75,7 @@ module Tml
   # The class can be extended with a different implementation, as long as the interface is supported
   class Config
     # Configuration Attributes
-    attr_accessor :enabled, :locale, :default_level, :format, :application, :postoffice, :context_rules, :logger, :cache, :default_tokens, :localization
+    attr_accessor :enabled, :locale, :default_level, :format, :application, :postoffice, :context_rules, :logger, :cache, :default_tokens, :localization, :disable_async_keys_registration
     attr_accessor :auto_init, :source_separator, :domain
 
     # Used by Rails and Sinatra extensions
