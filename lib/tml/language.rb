@@ -40,11 +40,18 @@ class Tml::Language < Tml::Base
     File.join(locale, 'language')
   end
 
+  # Supported locales must be of a form en, en-US, az-Cyrl-AZ
+  def self.normalize_locale(locale)
+    parts = locale.split(/[-_]/)
+    return parts.first.downcase if parts.size == 1
+    return [parts.first.downcase, parts.last.upcase].join('-') if parts.size == 2
+    ([parts.first.downcase] + parts[1..-2].collect{|part| part.downcase.capitalize} + [parts.first.upcase]).join('-')
+  end
+
   # Loads language definition from the service
   def fetch
     update_attributes(application.api_client.get(
-      "language/#{locale}/definition",
-      {},
+      "language/#{locale}/definition", {},
       {
           cache_key: self.class.cache_key(locale)
       }
@@ -73,10 +80,12 @@ class Tml::Language < Tml::Base
     end
   end
 
+  # Returns context by keyword
   def context_by_keyword(keyword)
     hash_value(contexts, keyword)
   end
 
+  # Returns context by token name
   def context_by_token_name(token_name)
     contexts.values.detect{|ctx| ctx.applies_to_token?(token_name)}
   end
@@ -109,7 +118,8 @@ class Tml::Language < Tml::Base
   end
 
   def current_source(options)
-    (options[:source] || Tml.session.block_option(:source) || Tml.session.current_source || 'undefined').to_s
+    return options[:source] if options and options[:source]
+    (Tml.session.block_option(:source) || Tml.session.current_source || 'undefined').to_s
   end
 
   #######################################################################################################
@@ -172,7 +182,7 @@ class Tml::Language < Tml::Base
     end
 
     # fetch translations grouped by source
-    source_key = current_source(options)
+    source_key = current_source(params[:options])
     current_source_path = source_path
 
     # Dynamic sources are never registered under the parent source for fast retrieval

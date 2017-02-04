@@ -43,21 +43,29 @@ module Tml
     def init(opts = {})
       return if Tml.config.disabled?
 
-      key       = opts[:key]          || Tml.config.application[:key]
-      host      = opts[:host]         || Tml.config.application[:host]
-      cdn_host  = opts[:cdn_host]     || Tml.config.application[:cdn_host]
-      token     = opts[:access_token] || Tml.config.application[:token]
+      # Tml.logger.debug(opts.inspect)
 
       Tml.cache.reset_version
+      Tml.cache.namespace = opts[:namespace]
 
+      init_application(opts)
+
+      self
+    end
+
+    def init_application(opts = {})
       self.current_user = opts[:user]
       self.current_source = opts[:source] || 'index'
       self.current_locale = opts[:locale]
       self.current_translator = opts[:translator]
 
-      # Tml.logger.debug(opts.inspect)
-
-      self.application = Tml::Application.new(:key => key, :access_token => token, :host => host, :cdn_host => cdn_host).fetch
+      app_config = Tml.config.application || {}
+      self.application = Tml::Application.new(
+          :key => opts[:key] || app_config[:key],
+          :access_token => opts[:access_token] || opts[:token] || app_config[:token],
+          :host => opts[:host] || app_config[:host],
+          :cdn_host => opts[:cdn_host] || app_config[:cdn_host]
+      ).fetch
 
       if self.current_translator
         self.current_translator.application = self.application
@@ -65,16 +73,19 @@ module Tml
 
       self.current_locale = preferred_locale(opts[:locale])
       self.current_language = self.application.current_language(self.current_locale)
-
-      self
     end
 
     def preferred_locale(locales)
       return application.default_locale unless locales
       locales = locales.is_a?(String) ? locales.split(',') : locales
+
       locales.each do |locale|
+        locale = Tml::Language.normalize_locale(locale)
+        return locale if application.locales.include?(locale)
+        locale = locale.split('-').first
         return locale if application.locales.include?(locale)
       end
+
       application.default_locale
     end
 
@@ -102,11 +113,40 @@ module Tml
 
     def target_language
       target_locale = block_option(:target_locale)
-      target_locale ? application.language(target_locale) : current_language
+      language = (target_locale ? application.language(target_locale) : current_language)
+      language || Tml.config.default_language
     end
 
     def inline_mode?
       current_translator and current_translator.inline?
+    end
+
+    def translate(label, description = '', tokens = {}, options = {})
+      params = Tml::Utils.normalize_tr_params(label, description, tokens, options)
+      return params[:label] if params[:label].tml_translated?
+
+      params[:options][:caller] ||= caller
+
+      if Tml.config.disabled?
+        return Tml.config.default_language.translate(params[:label], params[:tokens], params[:options]).tml_translated
+      end
+
+      # Translate individual sentences
+      if params[:options][:split]
+        text = params[:label]
+        sentences = Tml::Utils.split_sentences(text)
+        sentences.each do |sentence|
+          text = text.gsub(sentence, target_language.translate(sentence, params[:description], params[:tokens], params[:options]))
+        end
+        return text.tml_translated
+      end
+
+      target_language.translate(params).tml_translated
+    rescue Tml::Exception => ex
+      #pp ex, ex.backtrace
+      Tml.logger.error(ex.message)
+      #Tml.logger.error(ex.message + "\n=> " + ex.backtrace.join("\n=> "))
+      label
     end
 
     #########################################################
@@ -149,6 +189,7 @@ module Tml
       pop_block_options
       ret
     end
+    alias_method :with_options, :with_block_options
 
   end
 end

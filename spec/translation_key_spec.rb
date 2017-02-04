@@ -62,10 +62,10 @@ describe Tml::TranslationKey do
       expect(tkey.substitute_tokens("Hello {user1} [bold: and] {user2}", {:user1 => "Michael" , :user2 => "Tom"}, @english)).to eq("Hello Michael <strong>and</strong> Tom")
 
       tkey = Tml::TranslationKey.new(:label => "You have [link: [bold: {count}] messages]", :application => @app)
-      expect(tkey.substitute_tokens("You have [link: [bold: {count}] messages]", {:count => 5, :link => {:href => "www.google.com"}}, @english)).to eq("You have <a href='www.google.com'><strong>5</strong> messages</a>")
+      expect(tkey.substitute_tokens("You have [link: [bold: {count}] messages]", {:count => 5, :link => {:href => "www.google.com"}}, @english)).to eq("You have <a href='www.google.com' class='' style='' title=''><strong>5</strong> messages</a>")
 
       tkey = Tml::TranslationKey.new(:label => "You have [link][bold: {count}] messages[/link]", :application => @app)
-      expect(tkey.substitute_tokens("You have [link][bold: {count}] messages[/link]", {:count => 5, :link => {:href => "www.google.com"}}, @english)).to eq("You have <a href='www.google.com'><strong>5</strong> messages</a>")
+      expect(tkey.substitute_tokens("You have [link][bold: {count}] messages[/link]", {:count => 5, :link => {:href => "www.google.com"}}, @english)).to eq("You have <a href='www.google.com' class='' style='' title=''><strong>5</strong> messages</a>")
 
       user = stub_object({:first_name => "Tom", :last_name => "Anderson", :gender => "Male", :to_s => "Tom Anderson"})
       tkey = Tml::TranslationKey.new(:label => "Your name is {user.first_name}", :application => @app)

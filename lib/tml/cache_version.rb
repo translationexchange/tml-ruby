@@ -61,19 +61,31 @@ module Tml
 
     # validate that current cache version hasn't expired
     def validate_cache_version(version)
+      # if cache version is hardcoded, use it
+      if Tml.config.cache[:version]
+        return Tml.config.cache[:version]
+      end
+
       return version unless version.is_a?(Hash)
       return 'undefined' unless version['t'].is_a?(Numeric)
       return version['version'] if cache.read_only?
 
+      # if version check interval is disabled, don't try to check for the new
+      # cache version on the CDN
+      if version_check_interval == -1
+        Tml.logger.debug('Cache version check is disabled')
+        return version['version']
+      end
+
       expires_at = version['t'] + version_check_interval
       if expires_at < Time.now.to_i
         Tml.logger.debug('Cache version is outdated, needs refresh')
-        'undefined'
-      else
-        delta = expires_at - Time.now.to_i
-        Tml.logger.debug("Cache version is up to date, expires in #{delta}s")
-        version['version']
+        return 'undefined'
       end
+
+      delta = expires_at - Time.now.to_i
+      Tml.logger.debug("Cache version is up to date, expires in #{delta}s")
+      version['version']
     end
 
     # fetches the version from the cache

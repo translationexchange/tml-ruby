@@ -1,5 +1,6 @@
+# encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange Inc. http://translationexchange.com
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -29,69 +30,70 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-class Array
+module Tml
 
-  # translates an array of options for a select tag
-  def translate_options(description = '', options = {})
-    return [] if empty?
-
-    options = options.merge(:skip_decorations => true)
-
-    collect do |opt|
-      if opt.is_a?(Array) and opt.first.is_a?(String) 
-        [opt.first.translate(description, {}, options), opt.last]
-      elsif opt.is_a?(String)
-        [opt.translate(description, {}, options), opt]
-      else  
-        opt
-      end
-    end
-  end
-  alias_method :tro, :translate_options
-
-  # translates and joins all elements
-  def translate_and_join(separator = ', ', description = '', options = {})
-    self.translate(description, options).join(separator).tml_translated
+  class << self
+    attr_accessor :postoffice
   end
 
-  # translate array values 
-  def translate(description = '', options = {})
-    return [] if empty?
-
-    collect do |opt|
-      if opt.is_a?(String)
-        opt.translate(description, {}, options)
-      else  
-        opt
-      end
+  def self.postoffice
+    @postoffice ||= begin
+      po_config = Tml.config.postoffice || {}
+      Tml::Postoffice.new(
+        key:    po_config[:key],
+        token:  po_config[:token],
+        host:   po_config[:host]
+      )
     end
   end
 
-  # creates a sentence with tr "and" joiner
-  def translate_sentence(description = nil, options = {})
-    return '' if empty?
-    return first if size == 1
+  class Postoffice < Tml::Base
 
-    elements = translate(description, options)
+    PO_HOST = 'https://postoffice.translationexchange.com'
+    API_VERSION = 'v1'
 
-    options[:separator] ||= ', '
-    options[:joiner] ||= 'and'
+    attributes :host, :key, :access_token
 
-    result = elements[0..-2].join(options[:separator])
-    result << ' ' << options[:joiner].translate(description || 'List elements joiner', {}, options) << ' '
-    result << elements.last
+    # API host
+    def host
+      super || PO_HOST
+    end
 
-    result.tml_translated
+    # API token
+    def token
+      access_token
+    end
+
+    # Postoffice API client
+    def deliver(to, template, tokens = {}, options = {})
+      if key.blank?
+        Tml.logger.error("Failed to deliver #{template} to #{to} - PostOffice has not been configured")
+        return
+      end
+
+      Tml.logger.debug("Delivering #{template} to #{to}")
+      params = {
+        client_id: key,
+        template: template,
+        tokens: tokens,
+        to: to,
+        via: options[:via],
+        from: options[:from],
+        locale: options[:locale],
+        first_name: options[:first_name],
+        last_name: options[:last_name],
+        name: options[:name]
+      }
+      params = Tml::Utils.remove_nils(params)
+      api_client.execute_request("#{host}/api/#{API_VERSION}/deliver", params, {:method => :post})
+    end
+
+    private
+
+    # Create API client
+    def api_client
+      @api_client ||= Tml.config.api_client[:class].new(application: self)
+    end
+
   end
-
-  def tml_translated
-    return self if frozen?
-    @tml_translated = true
-    self
-  end
-
-  def tml_translated?
-    @tml_translated
-  end
-
 end

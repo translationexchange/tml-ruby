@@ -75,8 +75,8 @@ module Tml
   # The class can be extended with a different implementation, as long as the interface is supported
   class Config
     # Configuration Attributes
-    attr_accessor :enabled, :locale, :default_level, :format, :application, :context_rules, :logger, :cache, :default_tokens, :localization, :disable_async_keys_registration
-    attr_accessor :auto_init, :source_separator
+    attr_accessor :enabled, :locale, :default_level, :format, :application, :postoffice, :context_rules, :logger, :cache, :default_tokens, :localization, :disable_async_keys_registration
+    attr_accessor :auto_init, :source_separator, :domain
 
     # Used by Rails and Sinatra extensions
     attr_accessor :current_locale_method, :current_user_method, :translator_options, :i18n_backend
@@ -89,21 +89,29 @@ module Tml
       @enabled = true
       @default_level  = 0
       @format = :html
-      @subdomains = false
       @auto_init = true
       @source_separator = '@:@'
 
       @api_client = {
-          class: Tml::Api::Client,
-          timeout: 5,
-          open_timeout: 2
+        class: Tml::Api::Client,
+        timeout: 5,
+        open_timeout: 2
       }
 
       @locale = {
-        default:    'en',
-        method:     'current_locale',
-        subdomain:  false,
-        extension:  false
+        default:      'en',       # default locale
+        method:       'current_locale', # method to use for user selected locale, if nil, the rest will be a fallback
+        param:        'locale',   # the way to name the param
+        strategy:     'param',    # approach param, pre-path, pre-domain, custom-domain
+        redirect:     true,       # if TML should handle locale logic redirects
+        skip_default: false,      # if the default locales should not be visible
+        browser:      true,       # if you want to use a browser header to determine the locale
+        cookie:       true,       # if you want to store user selected locale in the cookie
+        # default_host: '',         # if user wants to not display default locale, we need to know the default host
+        # mapping: {                # domain to locale mapping
+        #   en: '',
+        #   ru: '',
+        # }
       }
 
       @agent = {
@@ -119,6 +127,7 @@ module Tml
       @current_user_method = :current_user
 
       @application = nil
+      @postoffice = nil
 
       @translator_options = {
         debug: false,
@@ -239,7 +248,7 @@ module Tml
             :em     =>  '<em>{$0}</em>',
             :italic =>  '<i>{$0}</i>',
             :i      =>  '<i>{$0}</i>',
-            :link   =>  "<a href='{$href}'>{$0}</a>",
+            :link   =>  "<a href='{$href}' class='{$class}' style='{$style}' title='{$title}'>{$0}</a>",
             :br     =>  '<br>{$0}',
             :strike =>  '<strike>{$0}</strike>',
             :div    =>  "<div id='{$id}' class='{$class}' style='{$style}'>{$0}</div>",
@@ -289,19 +298,11 @@ module Tml
         }
       }
 
-      @invalidator ||= {
-          enabled: true,
-          path: '/tml/upgrade',
-          auth: lambda do |request|
-            request.params[:access_token] == application[:token]
-          end
-      }
-
       @localization = {
-        :default_day_names        =>  ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-        :default_abbr_day_names   =>  ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-        :default_month_names      =>  ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-        :default_abbr_month_names =>  ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        :default_day_names        => %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday),
+        :default_abbr_day_names   => %w(Sun Mon Tue Wed Thu Fri Sat),
+        :default_month_names      => %w(January February March April May June July August September October November December),
+        :default_abbr_month_names => %w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec),
         :custom_date_formats      =>  {
           :default                => '%m/%d/%Y',            # 07/4/2008
           :short_numeric          => '%m/%d',               # 07/4
@@ -346,6 +347,41 @@ module Tml
       not enabled?
     end
 
+    def locale_expression
+      /^[a-z]{2}(-[A-Z]{2,3})?$/
+    end
+
+    def locale_strategy
+      locale[:strategy] || 'param'
+    end
+
+    def agent_locale_strategy
+      locale.merge(param: locale_param)
+    end
+
+    def locale_param
+      locale[:param] || 'locale'
+    end
+
+    def current_locale_method
+      locale[:method] || @current_locale_method
+    end
+
+    def locale_cookie_enabled?
+      if %w(pre-domain custom-domain).include?(locale[:strategy])
+        return false
+      end
+      locale[:cookie].nil? || locale[:cookie]
+    end
+
+    def locale_browser_enabled?
+      locale[:browser].nil? || locale[:browser]
+    end
+
+    def locale_redirect_enabled?
+      locale[:redirect].nil? || locale[:redirect]
+    end
+
     def nested_value(hash, key, default_value = nil)
       parts = key.split('.')
       parts.each do |part|
@@ -374,7 +410,7 @@ module Tml
     #end
 
     def default_locale
-      @locale[:default]
+      @locale[:default] || 'en'
     end
 
     def default_language

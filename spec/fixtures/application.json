@@ -47,6 +47,13 @@
             "flag_url":"http://localhost:3000/media/5/11/98/10/bc99d7cc527101e6d.png"
         },
         {
+            "locale":"de-DE",
+            "name":"Deutsch",
+            "english_name":"German",
+            "native_name":"Deutsch",
+            "flag_url":"http://localhost:3000/media/5/11/98/10/bc99d7cc527101e6d.png"
+        },
+        {
             "locale":"he",
             "name":"עברית",
             "english_name":"Hebrew",

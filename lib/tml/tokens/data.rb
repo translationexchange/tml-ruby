@@ -136,6 +136,7 @@ module Tml
       #   :separator => ', ',
       #   :joiner => 'and',
       #   :remainder => lambda{|elements| tr("#{count||other}", :count => elements.size)},
+      #   :translate => false,
       #   :expandable => true,
       #   :collapsable => true
       # })
@@ -254,7 +255,7 @@ module Tml
       def token_value_from_array_param(array, language, options)
         # if you provided an array, it better have some values
         if array.size < 2
-          return error("Invalid value for array token #{full_name} in #{label}")
+          return sanitize(array[0], array[0], language, options.merge(:safe => false))
         end
 
         # if the first value of an array is an array handle it here
@@ -279,14 +280,21 @@ module Tml
           return sanitize(array[0].send(array[1]), array[0], language, options.merge(:safe => false))
         end
 
+        # if second param is a lambda
+        if array[1].is_a?(Proc)
+          return sanitize(array[1].call(array[0]), array[0], language, options.merge(:safe => false))
+        end
+
         error("Invalid value for array token #{full_name} in #{label}")
       end
 
       ##############################################################################
       #
+      # Hashes are often used with JSON structures. We can be smart about how to pull default values.
+      #
       # examples:
       #
-      # tr("Hello {user}", {:user => {:value => "Michael", :gender => :male}}}
+      # tr("Hello {user}", {:user => {:name => "Michael", :gender => :male}}}
       #
       # tr("Hello {user}", {:user => {:object => {:gender => :male}, :value => "Michael"}}}
       # tr("Hello {user}", {:user => {:object => {:name => "Michael", :gender => :male}, :property => :name}}}
@@ -300,6 +308,13 @@ module Tml
 
       def token_value_from_hash_param(hash, language, options)
         value = Tml::Utils.hash_value(hash, :value)
+        [:name, :first_name, :display_name, :full_name, :username].each do |attr|
+          value ||= Tml::Utils.hash_value(hash, attr)
+        end
+
+        attr  = Tml::Utils.hash_value(hash, :attribute) || Tml::Utils.hash_value(hash, :property)
+        value ||= Tml::Utils.hash_value(hash, attr)
+
         object = Tml::Utils.hash_value(hash, :object)
 
         unless value.nil?
@@ -309,8 +324,6 @@ module Tml
         if object.nil?
           return error("Missing value for hash token #{full_name} in #{label}")
         end
-
-        attr  = Tml::Utils.hash_value(hash, :attribute) || Tml::Utils.hash_value(hash, :property)
 
         if object.is_a?(Hash)
           unless attr.nil?

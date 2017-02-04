@@ -17,9 +17,37 @@ describe Tml::Language do
 
       expect(@russian.has_definition?).to be_truthy
 
+      expect(@russian.context_by_keyword(:number)).to be_truthy
+      expect(@russian.context_by_keyword(:numeric)).to be_falsey
+      expect(@russian.context_by_token_name('count').keyword).to eq('number')
+      expect(@russian.context_by_token_name('num').keyword).to eq('number')
+      expect(@russian.context_by_token_name('user').keyword).to eq('gender')
+      expect(@russian.context_by_token_name('actor').keyword).to eq('gender')
+      expect(@russian.context_by_token_name('target').keyword).to eq('gender')
+      expect(@russian.context_by_token_name('profile').keyword).to eq('gender')
+      expect(@russian.context_by_token_name('users').keyword).to eq('genders')
+      expect(@russian.context_by_token_name('date').keyword).to eq('date')
+      expect(@russian.context_by_token_name('bla').keyword).to eq('value')
     end
   end
 
+  describe 'normalize locale' do
+    it 'should return correct locale' do
+      expect(Tml::Language.normalize_locale('en')).to eq('en')
+      expect(Tml::Language.normalize_locale('EN')).to eq('en')
+      expect(Tml::Language.normalize_locale('eN')).to eq('en')
+      expect(Tml::Language.normalize_locale('en_us')).to eq('en-US')
+      expect(Tml::Language.normalize_locale('en-us')).to eq('en-US')
+      expect(Tml::Language.normalize_locale('en-Us')).to eq('en-US')
+      expect(Tml::Language.normalize_locale('en-US')).to eq('en-US')
+      expect(Tml::Language.normalize_locale('EN-US')).to eq('en-US')
+      expect(Tml::Language.normalize_locale('az-Cyrl-AZ')).to eq('az-Cyrl-AZ')
+      expect(Tml::Language.normalize_locale('az-cyrl-az')).to eq('az-Cyrl-AZ')
+      expect(Tml::Language.normalize_locale('az_cyrl_az')).to eq('az-Cyrl-AZ')
+      expect(Tml::Language.normalize_locale('AZ_cyrl_AZ')).to eq('az-Cyrl-AZ')
+      expect(Tml::Language.normalize_locale('AZ_CYRL_AZ')).to eq('az-Cyrl-AZ')
+    end
+  end
 
   describe "testing translations" do
     before do
