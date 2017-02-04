@@ -125,7 +125,7 @@ module Tml
       params = Tml::Utils.normalize_tr_params(label, description, tokens, options)
       return params[:label] if params[:label].tml_translated?
 
-      params[:options][:caller] ||= caller
+      params[:options][:caller] ||= caller(1, 1)
 
       if Tml.config.disabled?
         return Tml.config.default_language.translate(params[:label], params[:tokens], params[:options]).tml_translated
