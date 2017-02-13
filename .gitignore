@@ -6,3 +6,6 @@ pkg/
 *.gem
 coverage
 Gemfile.lock
+tags
+.DS_Store
+

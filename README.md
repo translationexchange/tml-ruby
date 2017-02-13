@@ -50,7 +50,10 @@ The library can be invoked from the IRB. To use TML client you must require it, 
 
 ```ruby
 irb(main)> require 'tml'
-irb(main)> app = Tml.session.init(KEY, SECRET)
+irb(main)> app = Tml.session.init({
+  key: APP_KEY,
+  token: SDK_ACCESS_TOKEN
+})
 ```
 
 Now you can use the application to get any language registered with your app:
