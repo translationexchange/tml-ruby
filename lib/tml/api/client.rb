@@ -236,7 +236,17 @@ class Tml::Api::Client < Tml::Base
   # prepares API path
   def prepare_api_path(path)
     return path if path.match(/^https?:\/\//)
-    "#{API_PATH}#{path[0] == '/' ? '' : '/'}#{path}"
+    clean_path = trim_prepending_slash(path)
+
+    if clean_path.index("v1") == 0 || clean_path.index("v2") == 0
+      "/#{clean_path}"
+    else
+      "#{API_PATH}/#{clean_path}"
+    end
+  end
+
+  def trim_prepending_slash(str)
+    str.index("/") == 0 ? str[1..-1] : str
   end
 
   # prepares request
