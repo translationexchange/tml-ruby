@@ -103,6 +103,8 @@ module Tml
 
       def translate_tml(tml)
         return tml if empty_string?(tml)
+        pp tml
+
         tml = generate_data_tokens(tml)
 
         if option('split_sentences')
@@ -147,9 +149,9 @@ module Tml
         value = sanitize_value(buffer)
 
         return '{' + token + '}' if self_closing_node?(node)
-        return '[' + token + ': ' + value + ']' if short_token?(token, value)
+        # return '[' + token + ': ' + value + ']' if short_token?(token, value)
 
-        '[' + token + ']' + value + '[/' + token + ']'
+        '<' + token + '>' + value + '</' + token + '>'
       end
 
       def option(name)
@@ -162,8 +164,12 @@ module Tml
       end
 
       def empty_string?(tml)
-        tml = tml.gsub(/[\s\n\r\t]/, '')
-        tml == ''
+        tml = tml.gsub(/[\s\n\r\t]/, '').gsub(/[\u0080-\u00ff]/, '')
+        return true if tml == ''
+        return true if tml.match(/\A\$\{[^\}]+\}\z/)  # ignore variables ${var_name}
+        return true if tml.match(/\A\$?\d+\.?\d+\z/) # ignore prices and numbers
+
+        false
       end
 
       def reset_context
