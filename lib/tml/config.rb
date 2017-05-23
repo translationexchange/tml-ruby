@@ -156,7 +156,7 @@ module Tml
             regex: /(&[^;]*;)/
           },
           date: {
-            enabled: true,
+            enabled: false,
             formats: [
               [/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+,\s+\d+)/, "{month} {day}, {year}"],
               [/((January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+)/, "{month} {day}, {year}"],
@@ -166,12 +166,12 @@ module Tml
             name: 'date'
           },
           rules: [
-            {enabled: true, name: 'time',     regex: /(\d{1,2}:\d{1,2}\s+([A-Z]{2,3}|am|pm|AM|PM)?)/},
-            {enabled: true, name: 'phone',    regex: /((\d{1}-)?\d{3}-\d{3}-\d{4}|\d?\(\d{3}\)\s*\d{3}-\d{4}|(\d.)?\d{3}.\d{3}.\d{4})/},
-            {enabled: true, name: 'email',    regex: /([-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|io|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?)/},
+            {enabled: false, name: 'time',     regex: /(\d{1,2}:\d{1,2}\s+([A-Z]{2,3}|am|pm|AM|PM)?)/},
+            {enabled: false, name: 'phone',    regex: /((\d{1}-)?\d{3}-\d{3}-\d{4}|\d?\(\d{3}\)\s*\d{3}-\d{4}|(\d.)?\d{3}.\d{3}.\d{4})/},
+            {enabled: false, name: 'email',    regex: /([-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|io|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?)/},
             {enabled: false, name: 'price',    regex: /(\$\d*(,\d*)*(\.\d*)?)/},
-            {enabled: true, name: 'fraction', regex: /(\d+\/\d+)/},
-            {enabled: true, name: 'num',      regex: /(\b\d*(,\d*)*(\.\d*)?%?\b)/}
+            {enabled: false, name: 'fraction', regex: /(\d+\/\d+)/},
+            {enabled: false, name: 'num',      regex: /(\b\d*(,\d*)*(\.\d*)?%?\b)/}
           ]
         }
       }
