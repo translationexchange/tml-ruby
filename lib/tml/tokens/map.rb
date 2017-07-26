@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange Inc. http://translationexchange.com
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -30,50 +30,54 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-module Tml
-  module Api end
-  module Tokens
-    module XMessage end
-  end
-  module Tokenizers end
-  module Rules end
-  module Decorators end
-  module CacheAdapters end
-  module Generators end
+####################################################################### 
+# 
+# Map Token Forms
+#
+# tr("{user} likes this {animal @ dog: dog, cat: cat, bird: bird}", user: "Michael", animal: "dog")
+# tr("{user} likes this {animal @ dog, cat, bird}", user: "Michael", animal: 0)
+#
+####################################################################### 
 
-  def self.default_language
-    Tml.config.default_language
-  end
+class Tml::Tokens::Map < Tml::Tokens::Data
 
-  def self.current_language
-    Tml.session.current_language
+  attr_reader :params
+
+  def self.expression
+    /(%?\{{1,2}\s*[\w]+\s*@\s*[^\{\}\|]+\}{1,2})/
   end
 
-  def self.language(locale)
-    Tml.session.application.language(locale)
-  end
-
-  def self.translate(label, description = '', tokens = {}, options = {})
-    Tml.session.translate(label, description, tokens, options)
-  end
-
-  def self.with_options(opts)
-    Tml.session.with_options(opts) do
-      if block_given?
-        yield
+  def parse_elements
+    name_without_parens = @full_name.gsub(/^%/, '')[1..-2]
+    @context_keys = []
+    @case_keys = []
+    @short_name, @params = name_without_parens.split('@')
+    @short_name.strip!
+    @params = @params.split(',').collect{|param| param.strip}
+    if @params.first.index(':')
+      hash = {}
+      @params.each do |param|
+        key, value = param.split(':')
+        hash[key.to_s.strip] = value.to_s.strip
       end
+      @params = hash
     end
   end
-end
 
-%w(tml/base.rb tml tml/api tml/rules_engine tml/tokens tml/tokens/x_message tml/tokenizers tml/decorators tml/cache_adapters tml/cache tml/ext).each do |f|
-  if f.index('.rb')
-    require(File.expand_path(File.join(File.dirname(__FILE__), f)))
-    next
+  def substitute(label, context, language, options = {})
+    object = self.class.token_object(context, key)
+
+    if object.nil?
+      return error("Missing value for a token \"#{key}\" in \"#{label}\"", false)
+    end
+
+    if params.empty?
+      return error("Params may not be empty for token \"#{key}\" in \"#{label}\"", false)
+    end
+
+    object_value = params[object]
+
+    label.gsub(full_name, decorate(object_value, options))
   end
 
-  Dir[File.expand_path("#{File.dirname(__FILE__)}/#{f}/*.rb")].sort.each do |file|
-    require(file)
-  end
 end
-

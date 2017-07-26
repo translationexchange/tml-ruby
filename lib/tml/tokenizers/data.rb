@@ -54,11 +54,11 @@ module Tml
       attr_accessor :text, :context, :tokens, :opts
 
       def self.supported_tokens
-        [Tml::Tokens::Data, Tml::Tokens::Method, Tml::Tokens::Transform]
+        [Tml::Tokens::Data, Tml::Tokens::Method, Tml::Tokens::Transform, Tml::Tokens::Map]
       end
 
       def self.required?(label)
-        label.index("{")
+        label.index('{')
       end
 
       def initialize(text, context={}, opts={})

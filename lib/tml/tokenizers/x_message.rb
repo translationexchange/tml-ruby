@@ -49,7 +49,7 @@
 
 module Tml
   module Tokenizers
-    class Xmessage
+    class XMessage
 
       attr_accessor :label, :pos, :len, :last, :options, :tree
 
@@ -422,6 +422,31 @@ module Tml
         end
 
         buffer
+      end
+
+      def tokens
+        @tokens ||= begin
+          tokens = []
+          extract_tokens(tree, tokens)
+          tokens.uniq{ |t| [t.class.name, t.full_name] }
+        end
+      end
+
+      def extract_tokens(tree, tokens)
+        tree.each do |fragment|
+          if fragment[:type] == 'param'
+            tokens << Tml::Tokens::XMessage::Param.new(label, fragment)
+          elsif fragment[:type] == 'choice'
+            tokens << Tml::Tokens::XMessage::Choice.new(label, fragment)
+          elsif fragment[:type] == 'map'
+            tokens << Tml::Tokens::XMessage::Map.new(label, fragment)
+          end
+          if fragment[:items]
+            extract_tokens(fragment[:items], tokens)
+          elsif fragment[:styles]
+            extract_tokens(fragment[:styles], tokens)
+          end
+        end
       end
 
       def get_token_value(params, key)

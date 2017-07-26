@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange Inc. http://translationexchange.com
+# Copyright (c) 2016 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -30,50 +30,23 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-module Tml
-  module Api end
-  module Tokens
-    module XMessage end
-  end
-  module Tokenizers end
-  module Rules end
-  module Decorators end
-  module CacheAdapters end
-  module Generators end
+####################################################################### 
+# 
+# Map Token
+#
+# {0} tagged himself/herself in {1,choice,singular#{1,number} {2,map,photo#photo|video#video}|plural#{1,number} {2,map,photo#photos|video#videos}}.
+#
+####################################################################### 
 
-  def self.default_language
-    Tml.config.default_language
-  end
+class Tml::Tokens::XMessage::Map < Tml::Tokens::Data
 
-  def self.current_language
-    Tml.session.current_language
-  end
+  attr_accessor :params
 
-  def self.language(locale)
-    Tml.session.application.language(locale)
+  def initialize(label, opts)
+    @label = label
+    @short_name = opts[:index]
+    @full_name = "{#{@short_name}}"
+    @params = opts[:styles].collect{|style| style[:key]}
   end
 
-  def self.translate(label, description = '', tokens = {}, options = {})
-    Tml.session.translate(label, description, tokens, options)
-  end
-
-  def self.with_options(opts)
-    Tml.session.with_options(opts) do
-      if block_given?
-        yield
-      end
-    end
-  end
 end
-
-%w(tml/base.rb tml tml/api tml/rules_engine tml/tokens tml/tokens/x_message tml/tokenizers tml/decorators tml/cache_adapters tml/cache tml/ext).each do |f|
-  if f.index('.rb')
-    require(File.expand_path(File.join(File.dirname(__FILE__), f)))
-    next
-  end
-
-  Dir[File.expand_path("#{File.dirname(__FILE__)}/#{f}/*.rb")].sort.each do |file|
-    require(file)
-  end
-end
-
