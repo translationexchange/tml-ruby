@@ -103,7 +103,7 @@ module Tml
 
       def translate_tml(tml)
         return tml if empty_string?(tml)
-        pp tml
+        # pp tml
 
         tml = generate_data_tokens(tml)
 

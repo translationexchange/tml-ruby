@@ -237,7 +237,7 @@ class Tml::Application < Tml::Base
       source = Tml::Source.new(:source => source_key, :application => self)
       params << {
           :source => source_key,
-          :keys => keys.values.collect{|tkey| tkey.to_hash(:label, :description, :locale, :level)}
+          :keys => keys.values.collect{|tkey| tkey.to_hash(:label, :description, :locale, :level, :syntax)}
       }
       source.reset_cache
     end

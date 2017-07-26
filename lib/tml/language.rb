@@ -149,14 +149,17 @@ class Tml::Language < Tml::Base
       :description  => params[:description],
       :locale       => hash_value(params[:options], :locale) || Tml.session.block_option(:locale) || Tml.config.default_locale,
       :level        => hash_value(params[:options], :level) || Tml.session.block_option(:level) || Tml.config.default_level,
+      :syntax       => hash_value(params[:options], :syntax),
       :translations => []
     })
 
-    # pp "Translating #{params[:label]} from: #{translation_key.locale.inspect} to #{locale.inspect}"
+    # pp "Translating #{params[:label]} from: #{translation_key.locale.inspect} to #{locale.inspect} with syntax #{translation_key.syntax}"
     # Tml.logger.info("Translating #{params[:label]} from: #{translation_key.locale.inspect} to #{locale.inspect}")
 
     params[:tokens] ||= {}
-    params[:tokens][:viewing_user] ||= Tml.session.current_user
+    if params[:tokens].is_a?(Hash)
+      params[:tokens][:viewing_user] ||= Tml.session.current_user
+    end
 
     if Tml.config.disabled? or application.nil?
       return translation_key.substitute_tokens(params[:label], params[:tokens], self, params[:options]).tml_translated
@@ -212,6 +215,9 @@ class Tml::Language < Tml::Base
     end
 
     translation_key.translate(self, params[:tokens], params[:options]).tml_translated
+  rescue Exception => ex
+    pp ex, ex.backtrace
+    return params[:label]
   end
   alias :tr :translate
 

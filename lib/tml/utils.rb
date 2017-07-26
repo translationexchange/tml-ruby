@@ -41,7 +41,7 @@ module Tml
     def self.normalize_tr_params(label, description, tokens, options)
       return label if label.is_a?(Hash)
 
-      if description.is_a?(Hash)
+      if description.is_a?(Hash) or description.is_a?(Array)
         return {
           :label        => label,
           :description  => nil,

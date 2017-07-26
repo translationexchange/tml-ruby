@@ -34,7 +34,7 @@ require 'digest/md5'
 
 class Tml::TranslationKey < Tml::Base
   belongs_to :application, :language
-  attributes :id, :key, :label, :description, :locale, :level
+  attributes :id, :key, :label, :description, :locale, :level, :syntax
   has_many :translations # hashed by language
 
   def initialize(attrs = {})
@@ -199,6 +199,11 @@ class Tml::TranslationKey < Tml::Base
   end
 
   def substitute_tokens(translated_label, token_values, language, options = {})
+    if options[:syntax] == 'xmessage'
+      tokenizer = Tml::Tokenizers::Xmessage.new(label)
+      return tokenizer.substitute(language, token_values, options)
+    end
+
     if Tml::Tokenizers::Decoration.required?(translated_label)
       translated_label = Tml::Tokenizers::Decoration.new(translated_label, token_values, :allowed_tokens => decoration_tokens).substitute
     end
