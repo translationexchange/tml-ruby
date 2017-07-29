@@ -200,11 +200,8 @@ class Tml::TranslationKey < Tml::Base
 
   def substitute_tokens(translated_label, token_values, language, options = {})
     if options[:syntax] == 'xmessage'
-      pp "Translating #{translated_label} using xmessage syntax"
-
+      # pp "Translating #{translated_label} using xmessage syntax"
       tokenizer = Tml::Tokenizers::XMessage.new(translated_label)
-      # pp tokenizer.tree
-
       return tokenizer.substitute(language, token_values, options)
     end
 
