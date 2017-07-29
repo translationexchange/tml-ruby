@@ -242,6 +242,7 @@ module Tml
             :trade  =>  '&trade;',       # TM
           },
           :decoration => {
+            :anchor =>  "<a href='{$href}'>{$0}</a>",
             :strong =>  '<strong>{$0}</strong>',
             :bold   =>  '<strong>{$0}</strong>',
             :b      =>  '<strong>{$0}</strong>',
@@ -280,6 +281,7 @@ module Tml
             :trade  =>  '™',
           },
           :decoration => {
+            :anchor =>  '{$0}',
             :strong =>  '{$0}',
             :bold   =>  '{$0}',
             :b      =>  '{$0}',
@@ -408,6 +410,32 @@ module Tml
     #  return Tml.session.application.default_level if Tml.session.application
     #  @default_level
     #end
+
+    def xmessage_rule_key_mapping
+      @rule_key_mapping ||= {
+          number: {
+              one: 'singular',
+              few: 'few',
+              many: 'many',
+              other: 'plural'
+          },
+          gender: {
+              male: 'male',
+              female: 'female',
+              neutral: 'neutral',
+              other: 'other',
+          },
+          date: {
+              future: 'future',
+              present: 'present',
+              past: 'past'
+          }
+      }
+    end
+
+    def xmessage_decoration_tokens
+      @xmessage_tokens ||= @default_tokens[:html][:decoration].keys
+    end
 
     def default_locale
       @locale[:default] || 'en'

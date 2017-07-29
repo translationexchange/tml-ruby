@@ -30,32 +30,74 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-####################################################################### 
-# 
-# Choice Token
+#######################################################################
+#
+# Param Token
 #
 # {0} tagged himself/herself in {1,choice,singular#{1,number} {2,map,photo#photo|video#video}|plural#{1,number} {2,map,photo#photos|video#videos}}.
 #
-####################################################################### 
+#######################################################################
 
-class Tml::Tokens::XMessage::Choice < Tml::Tokens::Data
+class Tml::Tokens::XMessage::Decoration < Tml::Tokens::Decoration
 
-  attr_accessor :rule_keys
+  DEFAILT_DECORATION_PLACEHOLDER = '{!yield!}'
 
+  # {:index => "2",
+  #  :type => "anchor",
+  #  :styles => ...
+  # }
   def initialize(label, opts)
     @label = label
-    @short_name = opts[:index]
-    @full_name = "{#{@short_name}}"
-    @rule_keys = opts[:styles].collect{|style| style[:key]}
-    @case_keys = []
-    @context_keys = []
-    if @rule_keys.include?('singular') or @rule_keys.include?('plural')
-      @context_keys = ['number']
-    elsif @rule_keys.include?('male') or @rule_keys.include?('female')
-      @context_keys = ['gender']
-    elsif @rule_keys.include?('past') or @rule_keys.include?('present') or @rule_keys.include?('future')
-      @context_keys = ['date']
+    @type = opts[:type]
+    @short_name = opts[:index].to_s.gsub(':', '')
+    @full_name = "#{opts[:index]}}"
+    @default_name = @type
+  end
+
+  def token_value(token_object, language)
+    token_object
+  end
+
+  def token_object(token_values)
+    if token_values.is_a?(Array)
+      token_values[@short_name.to_i]
+    else
+      Tml::Utils.hash_value(token_values, @short_name)
     end
+  end
+
+  def template(method)
+    if method
+      if method.is_a?(String)
+        if @type == 'anchor'
+          return "<a href='#{method}'>#{DEFAILT_DECORATION_PLACEHOLDER}</a>"
+        end
+
+        return method
+      end
+
+      if method.is_a?(Array) or method.is_a?(Hash)
+        return default_decoration(DEFAILT_DECORATION_PLACEHOLDER, method)
+      end
+
+      return DEFAILT_DECORATION_PLACEHOLDER
+    end
+
+    if Tml.config.default_token_value(@default_name, :decoration)
+      return default_decoration(DEFAILT_DECORATION_PLACEHOLDER)
+    end
+
+    ''
+  end
+
+  def open_tag(method)
+    @template = template(method)
+    # pp label: label, type: @type, template: @template, method: method
+    @template.split(DEFAILT_DECORATION_PLACEHOLDER).first
+  end
+
+  def close_tag
+    @template.split(DEFAILT_DECORATION_PLACEHOLDER).last
   end
 
 end

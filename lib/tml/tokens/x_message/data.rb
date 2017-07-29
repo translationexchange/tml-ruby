@@ -38,12 +38,17 @@
 # 
 ####################################################################### 
 
-class Tml::Tokens::XMessage::Param < Tml::Tokens::Data
+class Tml::Tokens::XMessage::Data < Tml::Tokens::Data
 
   def initialize(label, opts)
     @label = label
     @short_name = opts[:index]
-    @full_name = "{#{@short_name}}"
+    @full_name = "{#{opts[:index]}}"
+    @case_keys = []
+    @context_keys = []
+    # if opts[:styles]
+    #   @case_keys = []
+    # end
   end
 
 end

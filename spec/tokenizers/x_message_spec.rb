@@ -148,16 +148,32 @@ describe Tml::Tokenizers::XMessage do
                                                               {:key => "inv",
                                                                :items => [{:type => "trans", :value => "invites"}]}]}]}]}]}]},
                                 {:type => "trans", :value => "."}
+
                             ])
       expect(dt.substitute(language, [1, 'conn', 'google.com'])).to eq("You have <a href='google.com'>1 new connection</a>.")
       expect(dt.substitute(language, [2, 'conn', 'google.com'])).to eq("You have <a href='google.com'>2 new connections</a>.")
       expect(dt.substitute(language, [3, 'inv', 'google.com'])).to eq("You have <a href='google.com'>3 new invites</a>.")
       # pp dt.tokens
-      expect(dt.tokens.count).to eq(2)
+      expect(dt.tokens.count).to eq(4)
       expect(dt.tokens.first.full_name).to eq('{0}')
-      expect(dt.tokens.first.keys).to eq(["singular", "plural"])
+      expect(dt.tokens.first.context_keys).to eq(["number"])
+      expect(dt.tokens.first.rule_keys).to eq(["singular", "plural"])
       expect(dt.tokens.last.full_name).to eq('{1}')
       expect(dt.tokens.last.params).to eq(["conn", "inv"])
+
+
+      dt = Tml::Tokenizers::XMessage.new('You have {0,anchor,text#messages}.')
+      expect(dt.tree).to eq([{:type=>"trans", :value=>"You have "}, {:index=>"0", :type=>"anchor", :styles=>[{:key=>"text", :items=>[{:type=>"trans", :value=>"messages"}]}]}, {:type=>"trans", :value=>"."}])
+      expect(dt.substitute(language, ['google.com'])).to eq("You have <a href='google.com'>messages</a>.")
+
+      dt = Tml::Tokenizers::XMessage.new('You have {:link,link,text#messages}.')
+      expect(dt.tree).to eq([{:type=>"trans", :value=>"You have "}, {:index=>":link", :type=>"link", :styles=>[{:key=>"text", :items=>[{:type=>"trans", :value=>"messages"}]}]}, {:type=>"trans", :value=>"."}])
+      expect(dt.substitute(language, {link: {href: 'google.com'}})).to eq("You have <a href='google.com' class='' style='' title=''>messages</a>.")
+
+      dt = Tml::Tokenizers::XMessage.new('You have {:link1,link,text#messages}.')
+      expect(dt.tree).to eq([{:type=>"trans", :value=>"You have "}, {:index=>":link1", :type=>"link", :styles=>[{:key=>"text", :items=>[{:type=>"trans", :value=>"messages"}]}]}, {:type=>"trans", :value=>"."}])
+      expect(dt.substitute(language, {link1: {href: 'google.com'}})).to eq("You have <a href='google.com' class='' style='' title=''>messages</a>.")
+
     end
   end
 

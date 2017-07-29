@@ -56,6 +56,7 @@ module Tml
 
       def parse_elements
         name_without_parens = @full_name.gsub(/^%/, '')[1..-2]
+        name_without_parens = @full_name.gsub(/^%/, '')[1..-2]
         name_without_case_keys = name_without_parens.split('::').first.strip
 
         @short_name = name_without_parens.split(':').first.strip
@@ -103,13 +104,24 @@ module Tml
 
       def self.token_object(token_values, token_name)
         return nil if token_values.nil?
-        token_object = Tml::Utils.hash_value(token_values, token_name)
+        token_name = token_name.to_s.gsub(':', '')
+
+        if token_values.is_a?(Array)
+          token_object = token_values[token_name.to_i]
+        else
+          token_object = Tml::Utils.hash_value(token_values, token_name)
+        end
+
         return token_object.first if token_object.is_a?(Array)
         if token_object.is_a?(Hash)
           object = Tml::Utils.hash_value(token_object, :object)
           return object if object
         end
         token_object
+      end
+
+      def token_object(token_values)
+        self.class.token_object(token_values, short_name)
       end
 
       ##############################################################################

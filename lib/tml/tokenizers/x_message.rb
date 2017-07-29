@@ -354,70 +354,89 @@ module Tml
         @tree = nil
       end
 
-      def rule_key_mapping
-        @rule_key_mapping ||= {
-            number: {
-                one: 'singular',
-                other: 'plural'
-            }
-        }
-      end
-
       def rule_key(context_key, rule_key)
-        return rule_key unless rule_key_mapping[context_key.to_sym]
-        rule_key_mapping[context_key.to_sym][rule_key.to_sym] || rule_key
+        return rule_key unless Tml.config.xmessage_rule_key_mapping[context_key.to_sym]
+        Tml.config.xmessage_rule_key_mapping[context_key.to_sym][rule_key.to_sym] || rule_key
       end
 
-      def choice(language, context_key, value)
+      def choice(language, context_key, token_object)
+        return unless context_key
+
         ctx = language.context_by_keyword(context_key)
-        # pp ctx
+        # pp context_key, token_object
+
         if ctx
-          rule = ctx.find_matching_rule(value)
+          rule = ctx.find_matching_rule(token_object)
           if rule
             # pp context_key, rule.keyword
             return rule_key(context_key, rule.keyword)
           end
         end
 
-        'other'
+        nil
+      end
+
+      def context_key_by_styles(styles)
+        keys = styles.collect{|style| style[:key]}
+
+        Tml.config.xmessage_rule_key_mapping.each do |context_key, mapping|
+          return context_key if (mapping.values & keys).count > 0
+        end
+
+        nil
+      end
+
+      def data?(type)
+        return false unless type
+        %w(param number).include?(type)
+      end
+
+      def decoration?(type)
+        return false unless type
+        Tml.config.xmessage_decoration_tokens.include?(type.to_sym)
+      end
+
+      def choice?(type)
+        type == 'choice'
+      end
+
+      def map?(type)
+        type == 'map'
       end
 
       def compile(language, exp, buffer, params)
         style = nil
 
         exp.each do |el|
-          token_value = get_token_value(params, el[:index])
+          token = token_by_type(el[:type], el)
+          token_object = get_token_object(params, token)
+          token_value = get_token_value(token_object, token, language)
 
           if el[:styles]
-            if el[:type] == 'choice'
-              key = choice(language, 'number', token_value)
+            if choice?(el[:type])
+              key = choice(language, context_key_by_styles(el[:styles]), token_object)
               style = el[:styles].find{ |style|
                 style[:key] == key
               }
               if style
                 compile(language, style[:items], buffer, params)
               end
-            elsif el[:type] == 'map'
+            elsif map?(el[:type])
               style = el[:styles].find{ |style|
                 style[:key] == token_value
               }
               compile(language, style[:items], buffer, params)
-            elsif el[:type] == 'anchor'
-              buffer << "<a href='#{token_value}'>"
+            elsif decoration?(el[:type])
+              buffer << token.open_tag(token_object)
               compile(language, el[:styles][0][:items], buffer, params)
-              buffer << '</a>'
+              buffer << token.close_tag
             else
               compile(language, el[:styles][0][:items], buffer, params)
             end
+          elsif data?(el[:type])
+            buffer << token_value
           else
-            if el[:type] == 'param'
-              val = token_value
-            elsif el[:type] == 'number'
-              val = token_value.to_i
-            else
-              val = el[:value]
-            end
-            buffer << val
+            buffer << el[:value]
           end
         end
 
@@ -432,15 +451,24 @@ module Tml
         end
       end
 
+      def token_by_type(type, data)
+        if decoration?(type)
+          Tml::Tokens::XMessage::Decoration.new(label, data)
+        elsif data?(type)
+          Tml::Tokens::XMessage::Data.new(label, data)
+        elsif choice?(type)
+          Tml::Tokens::XMessage::Choice.new(label, data)
+        elsif map?(type)
+          return Tml::Tokens::XMessage::Map.new(label, data)
+        else
+          nil
+        end
+      end
+
       def extract_tokens(tree, tokens)
         tree.each do |fragment|
-          if fragment[:type] == 'param'
-            tokens << Tml::Tokens::XMessage::Param.new(label, fragment)
-          elsif fragment[:type] == 'choice'
-            tokens << Tml::Tokens::XMessage::Choice.new(label, fragment)
-          elsif fragment[:type] == 'map'
-            tokens << Tml::Tokens::XMessage::Map.new(label, fragment)
-          end
+          token = token_by_type(fragment[:type], fragment)
+          tokens << token if token
           if fragment[:items]
             extract_tokens(fragment[:items], tokens)
           elsif fragment[:styles]
@@ -449,16 +477,14 @@ module Tml
         end
       end
 
-      def get_token_value(params, key)
-        if key.is_a?(String)
-          key = key.gsub(/^:/, '')
-        end
+      def get_token_object(token_values, token)
+        return nil unless token
+        token.token_object(token_values)
+      end
 
-        if params.is_a?(Hash)
-          params[key.to_s] || params[key.to_s.to_sym]
-        else
-          params[key.to_i]
-        end
+      def get_token_value(token_object, token, language)
+        return nil unless token_object && token
+        token.token_value(token_object, language)
       end
 
       def substitute(language, tokens = {}, options = {})

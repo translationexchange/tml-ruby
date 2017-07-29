@@ -47,6 +47,8 @@ class Tml::Tokens::XMessage::Map < Tml::Tokens::Data
     @short_name = opts[:index]
     @full_name = "{#{@short_name}}"
     @params = opts[:styles].collect{|style| style[:key]}
+    @case_keys = []
+    @context_keys = []
   end
 
 end

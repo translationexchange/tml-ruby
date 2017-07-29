@@ -53,7 +53,7 @@ module Tml
   module Tokenizers
     class Decoration
 
-      attr_reader :tokens, :fragments, :context, :text, :opts
+      attr_reader :tokens, :fragments, :context, :label, :opts
 
       RESERVED_TOKEN       = 'tml'
 
@@ -63,14 +63,14 @@ module Tml
       RE_LONG_TOKEN_END    = '\[\/[\w]*\]'                     # [/link]
       RE_HTML_TOKEN_START  = '<[^\>]*>'                        # <link>
       RE_HTML_TOKEN_END    = '<\/[^\>]*>'                      # </link>
-      RE_TEXT              = '[^\[\]<>]+'                        # '[\w\s!.:{}\(\)\|,?]*'
+      RE_TEXT              = '[^\[\]<>]+'                      # '[\w\s!.:{}\(\)\|,?]*'
 
       def self.required?(label)
         label.index('[') or label.index('<')
       end
 
-      def initialize(text, context = {}, opts = {})
-        @text = "[#{RESERVED_TOKEN}]#{text}[/#{RESERVED_TOKEN}]"
+      def initialize(label, context = {}, opts = {})
+        @label = label
         @context = context
         @opts = opts
         tokenize
@@ -84,12 +84,12 @@ module Tml
               RE_HTML_TOKEN_START,
               RE_HTML_TOKEN_END,
               RE_TEXT].join('|')
-        @fragments = text.scan(/#{re}/)
+        @fragments = "[#{RESERVED_TOKEN}]#{@label}[/#{RESERVED_TOKEN}]".scan(/#{re}/)
         @tokens = []
       end
 
       def parse
-        return @text unless fragments
+        return @label unless fragments
         token = fragments.shift
 
         if token.match(/#{RE_SHORT_TOKEN_START}/)
@@ -136,66 +136,9 @@ module Tml
         tree
       end
 
-      def default_decoration(token_name, token_value)
-        default_decoration = Tml.config.default_token_value(normalize_token(token_name), :decoration)
-
-        unless default_decoration
-          Tml.logger.error("Invalid decoration token value for #{token_name} in #{text}")
-          return token_value
-        end
-
-        default_decoration = default_decoration.clone
-        decoration_token_values = context[token_name.to_sym] || context[token_name.to_s]
-
-        default_decoration.gsub!('{$0}', token_value.to_s)
-
-        if decoration_token_values.is_a?(Hash)
-          decoration_token_values.keys.each do |key|
-            default_decoration.gsub!("{$#{key}}", decoration_token_values[key].to_s)
-          end
-        end
-
-        # remove unused attributes
-        default_decoration = default_decoration.gsub(/\{\$[^}]*\}/, '')
-        default_decoration
-      end
-
-      def allowed_token?(token)
-        return true if opts[:allowed_tokens].nil?
-        opts[:allowed_tokens].include?(token)
-      end
-
-      def apply(token, value)
-        return value if token == RESERVED_TOKEN
-        return value unless allowed_token?(token)
-
-        method = context[token.to_sym] || context[token.to_s]
-
-        if method
-          if method.is_a?(Proc)
-            return method.call(value)
-          end
-
-          if method.is_a?(Array) or method.is_a?(Hash)
-            return default_decoration(token, value)
-          end
-
-          if method.is_a?(String)
-            return method.to_s.gsub('{$0}', value)
-          end
-
-          return value
-        end
-
-        if Tml.config.default_token_value(normalize_token(token), :decoration)
-          return default_decoration(token, value)
-        end
-
-        value
-      end
-
-      def normalize_token(name)
-        name.to_s.gsub(/(\d)*$/, '')
+      def apply(token_name, value)
+        token = ::Tml::Tokens::Decoration.new(label, token_name)
+        token.apply(context, value, opts[:allowed_tokens])
       end
 
       def evaluate(expr)
@@ -211,7 +154,7 @@ module Tml
       end
 
       def substitute
-        evaluate(parse).gsub('[/tml]', '')
+        evaluate(parse).gsub(/[<\[]\/tml[>\]]/, '')
       end
 
     end
