@@ -35,6 +35,7 @@ module Tml
     class Decoration
 
       RESERVED_TOKEN = 'tml'
+      TOKEN_PLACEHOLDER = '{$0}'
 
       attr_reader :label, :full_name, :short_name, :default_name
 
@@ -55,12 +56,11 @@ module Tml
         default_decoration = Tml.config.default_token_value(default_name, :decoration)
 
         unless default_decoration
-          Tml.logger.error("Invalid decoration token value for #{short_name} in #{label}")
-          return token_content
+          return "<#{short_name}>#{token_content}</#{short_name}>"
         end
 
         # {$0} always represents the actual content
-        default_decoration = default_decoration.gsub('{$0}', token_content.to_s)
+        default_decoration = default_decoration.gsub(TOKEN_PLACEHOLDER, token_content.to_s)
 
         # substitute the token values with hash elements
         if decoration_token_values.is_a?(Hash)
@@ -90,25 +90,21 @@ module Tml
 
         if method
           if method.is_a?(String)
-            return method.to_s.gsub('{$0}', token_content)
+            return method.to_s.gsub(TOKEN_PLACEHOLDER, token_content)
           end
 
           if method.is_a?(Proc)
             return method.call(token_content)
           end
 
-          if method.is_a?(Array) or method.is_a?(Hash)
+          if method.is_a?(Array) || method.is_a?(Hash)
             return default_decoration(token_content, method)
           end
 
           return token_content
         end
 
-        if Tml.config.default_token_value(default_name, :decoration)
-          return default_decoration(token_content)
-        end
-
-        token_content
+        default_decoration(token_content)
       end
 
     end

@@ -43,7 +43,7 @@ class Tml::Tokens::XMessage::Data < Tml::Tokens::Data
   def initialize(label, opts)
     @label = label
     @short_name = opts[:index]
-    @full_name = "{#{opts[:index]}}"
+    @full_name = "{#{@short_name}}"
     @case_keys = []
     @context_keys = []
     # if opts[:styles]

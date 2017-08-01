@@ -40,7 +40,7 @@
 
 class Tml::Tokens::XMessage::Decoration < Tml::Tokens::Decoration
 
-  DEFAILT_DECORATION_PLACEHOLDER = '{!yield!}'
+  DEFAULT_DECORATION_PLACEHOLDER = '{!yield!}'
 
   # {:index => "2",
   #  :type => "anchor",
@@ -69,35 +69,33 @@ class Tml::Tokens::XMessage::Decoration < Tml::Tokens::Decoration
   def template(method)
     if method
       if method.is_a?(String)
+
+        # backwards compatibility to legacy code
         if @type == 'anchor'
-          return "<a href='#{method}'>#{DEFAILT_DECORATION_PLACEHOLDER}</a>"
+          return "<a href='#{method}'>#{DEFAULT_DECORATION_PLACEHOLDER}</a>"
         end
 
         return method
       end
 
       if method.is_a?(Array) or method.is_a?(Hash)
-        return default_decoration(DEFAILT_DECORATION_PLACEHOLDER, method)
+        return default_decoration(DEFAULT_DECORATION_PLACEHOLDER, method)
       end
 
-      return DEFAILT_DECORATION_PLACEHOLDER
+      return DEFAULT_DECORATION_PLACEHOLDER
     end
 
-    if Tml.config.default_token_value(@default_name, :decoration)
-      return default_decoration(DEFAILT_DECORATION_PLACEHOLDER)
-    end
-
-    ''
+    default_decoration(DEFAULT_DECORATION_PLACEHOLDER)
   end
 
   def open_tag(method)
     @template = template(method)
     # pp label: label, type: @type, template: @template, method: method
-    @template.split(DEFAILT_DECORATION_PLACEHOLDER).first
+    @template.split(DEFAULT_DECORATION_PLACEHOLDER).first
   end
 
   def close_tag
-    @template.split(DEFAILT_DECORATION_PLACEHOLDER).last
+    @template.split(DEFAULT_DECORATION_PLACEHOLDER).last
   end
 
 end
