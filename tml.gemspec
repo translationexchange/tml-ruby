@@ -1,5 +1,5 @@
 #--
-# Copyright (c) 2014 Michael Berkovich, TranslationExchange.com
+# Copyright (c) 2017 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |

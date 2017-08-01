@@ -359,28 +359,21 @@ module Tml
         Tml.config.xmessage_rule_key_mapping[context_key.to_sym][rule_key.to_sym] || rule_key
       end
 
-      def choice(language, context_key, token_object)
+      def choice(language, token, token_object)
+        return unless token
+
+        context_key = token.context_keys.first
         return unless context_key
 
         ctx = language.context_by_keyword(context_key)
+        return unless ctx
+
         # pp context_key, token_object
 
-        if ctx
-          rule = ctx.find_matching_rule(token_object)
-          if rule
-            # pp context_key, rule.keyword
-            return rule_key(context_key, rule.keyword)
-          end
-        end
-
-        nil
-      end
-
-      def context_key_by_styles(styles)
-        keys = styles.collect{|style| style[:key]}
-
-        Tml.config.xmessage_rule_key_mapping.each do |context_key, mapping|
-          return context_key if (mapping.values & keys).count > 0
+        rule = ctx.find_matching_rule(token_object)
+        if rule
+          # pp context_key, rule.keyword
+          return rule_key(context_key, rule.keyword)
         end
 
         nil
@@ -414,7 +407,7 @@ module Tml
 
           if el[:styles]
             if choice?(el[:type])
-              key = choice(language, context_key_by_styles(el[:styles]), token_object)
+              key = choice(language, token, token_object)
               style = el[:styles].find{ |style|
                 style[:key] == key
               }
