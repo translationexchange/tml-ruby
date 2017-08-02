@@ -92,6 +92,7 @@ module Tml
 
       # Utility method for errors
       def error(msg, return_token = true)
+        # pp msg
         Tml.logger.error(msg)
         return_token ? full_name : label
       end

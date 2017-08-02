@@ -84,10 +84,12 @@ module Tml
 
       def substitute(language, options = {})
         label = self.text
+
         tokens.each do |token|
           next unless token_allowed?(token)
           label = token.substitute(label, context, language, options)
         end
+
         label
       end
 

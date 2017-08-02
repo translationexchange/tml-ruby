@@ -307,6 +307,8 @@ class Tml::Application < Tml::Base
 
   # Cache translations within application object
   def cache_translations(locale, key, new_translations)
+    return if new_translations.nil?
+
     self.translations ||= {}
     self.translations[locale] ||= {}
     self.translations[locale][key] = new_translations.collect do |t|

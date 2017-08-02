@@ -68,7 +68,6 @@ class Tml::Tokens::Transform < Tml::Tokens::Data
     @short_name = name_without_pipes.split(':').first.strip
     @case_keys = name_without_pipes.scan(/(::\w+)/).flatten.uniq.collect{|c| c.gsub('::', '')}
     @context_keys = name_without_case_keys.scan(/(:\w+)/).flatten.uniq.collect{|c| c.gsub(':', '')}
-
     @pipe_separator = (full_name.index('||') ? '||' : '|')
     @piped_params = name_without_parens.split(pipe_separator).last.split(",").collect{|param| param.strip}
   end

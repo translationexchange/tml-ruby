@@ -68,6 +68,7 @@ class Tml::TranslationKey < Tml::Base
   end
 
   def set_translations(locale, translations)
+    return unless translations
     translations.each do |translation|
       translation.locale ||= locale
       translation.translation_key = self
