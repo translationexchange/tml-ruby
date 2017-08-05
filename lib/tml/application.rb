@@ -39,7 +39,7 @@ class Tml::Application < Tml::Base
   # CDN_HOST = 'https://trex-snapshots.s3-us-west-1.amazonaws.com'
 
   attributes :host, :cdn_host, :id, :key, :access_token, :name, :description, :threshold, :default_locale, :default_level
-  has_many :features, :languages, :languages_by_locale, :sources, :tokens, :css, :shortcuts, :translations, :extensions
+  has_many :features, :languages, :languages_by_locale, :sources, :sources_by_key, :tokens, :css, :shortcuts, :translations, :extensions
   has_many :ignored_keys
 
   # Returns application cache key
@@ -125,14 +125,15 @@ class Tml::Application < Tml::Base
     end
 
     if hash_value(extensions, :sources)
-      self.sources ||= {}
+      self.sources_by_key ||= {}
       hash_value(extensions, :sources).each do |source, data|
         cache.store(Tml::Source.cache_key(source_locale, source), data) if cache
-        self.sources[source] ||= Tml::Source.new(
+        source_key = "#{source_locale}/#{source}"
+        self.sources_by_key[source_key] ||= Tml::Source.new(
           application:  self,
           source:       source
         )
-        self.sources[source].update_translations(source_locale, data)
+        self.sources_by_key[source].update_translations(source_locale, data)
       end
     end
   end
@@ -193,8 +194,9 @@ class Tml::Application < Tml::Base
 
   # Returns source by key
   def source(key, locale)
-    self.sources ||= {}
-    self.sources["#{locale}/#{key}"] ||= Tml::Source.new(
+    self.sources_by_key ||= {}
+    source_key = "#{locale}/#{key}"
+    self.sources_by_key[source_key] ||= Tml::Source.new(
       :application  => self,
       :source       => key
     ).fetch_translations(locale)
@@ -258,7 +260,7 @@ class Tml::Application < Tml::Base
 
   # Reset translation cache
   def reset_translation_cache
-    self.sources = {}
+    self.sources_by_key = {}
     self.translations = {}
     @languages_by_locale      = nil
     @missing_keys_by_sources  = nil

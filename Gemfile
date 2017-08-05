@@ -5,7 +5,6 @@ Encoding.default_internal = Encoding::UTF_8
 
 gem 'rake', '~> 10.4'
 gem 'rdoc', '~> 4.2'
-gem 'coveralls', '~> 0.8.10', require: false
 
 group :test do
   gem 'memcache_mock'
@@ -15,6 +14,7 @@ group :test do
   gem 'rspec-mocks', '~> 3.1'
   gem 'simplecov', '~> 0.9', :require => false
   gem 'simplecov-html', '~> 0.8', :require => false
+  gem 'coveralls', '~> 0.8', require: false
 end
 
 gemspec
