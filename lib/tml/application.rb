@@ -133,7 +133,7 @@ class Tml::Application < Tml::Base
           application:  self,
           source:       source
         )
-        self.sources_by_key[source].update_translations(source_locale, data)
+        self.sources_by_key[source_key].update_translations(source_locale, data)
       end
     end
   end
