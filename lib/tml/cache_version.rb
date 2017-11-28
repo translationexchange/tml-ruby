@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange, Inc
+# Copyright (c) 2017 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
