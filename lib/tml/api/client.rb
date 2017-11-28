@@ -1,6 +1,6 @@
 # encoding: UTF-8
 #--
-# Copyright (c) 2016 Translation Exchange, Inc
+# Copyright (c) 2017 Translation Exchange, Inc
 #
 #  _______                  _       _   _             ______          _
 # |__   __|                | |     | | (_)           |  ____|        | |
@@ -77,9 +77,9 @@ class Tml::Api::Client < Tml::Base
   # API connection
   def connection
     @connection ||= Faraday.new(:url => host) do |faraday|
-      faraday.request(:url_encoded)               # form-encode POST params
+      faraday.request(:url_encoded) # form-encode POST params
       # faraday.response :logger                  # log requests to STDOUT
-      faraday.adapter(Faraday.default_adapter)    # make requests with Net::HTTP
+      faraday.adapter(Faraday.default_adapter) # make requests with Net::HTTP
     end
   end
 
@@ -113,8 +113,8 @@ class Tml::Api::Client < Tml::Base
   # cdn_connection
   def cdn_connection
     @cdn_connection ||= Faraday.new(:url => application.cdn_host) do |faraday|
-      faraday.request(:url_encoded)               # form-encode POST params
-      faraday.adapter(Faraday.default_adapter)    # make requests with Net::HTTP
+      faraday.request(:url_encoded) # form-encode POST params
+      faraday.adapter(Faraday.default_adapter) # make requests with Net::HTTP
     end
   end
 
@@ -136,7 +136,7 @@ class Tml::Api::Client < Tml::Base
     trace_api_call(cdn_path, params, opts.merge(:host => application.cdn_host)) do
       begin
         response = cdn_connection.get do |request|
-          prepare_request(request, cdn_path, params)
+          prepare_request(request, cdn_path, params, opts)
         end
       rescue Exception => ex
         Tml.logger.error("Failed to execute request: #{ex.message[0..255]}")
@@ -158,7 +158,7 @@ class Tml::Api::Client < Tml::Base
 
     begin
       data = JSON.parse(data)
-    rescue Exception => ex
+    rescue => ex
       return nil
     end
 
@@ -238,7 +238,7 @@ class Tml::Api::Client < Tml::Base
     return path if path.match(/^https?:\/\//)
     clean_path = trim_prepending_slash(path)
 
-    if clean_path.index("v1") == 0 || clean_path.index("v2") == 0
+    if clean_path.index('v1') == 0 || clean_path.index('v2') == 0
       "/#{clean_path}"
     else
       "#{API_PATH}/#{clean_path}"
@@ -246,16 +246,20 @@ class Tml::Api::Client < Tml::Base
   end
 
   def trim_prepending_slash(str)
-    str.index("/") == 0 ? str[1..-1] : str
+    str.index('/') == 0 ? str[1..-1] : str
   end
 
   # prepares request
-  def prepare_request(request, path, params)
-    request.options.timeout             = Tml.config.api_client[:timeout]
-    request.options.open_timeout        = Tml.config.api_client[:open_timeout]
-    request.headers['User-Agent']       = "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION})"
-    request.headers['Accept']           = 'application/json'
-    request.headers['Accept-Encoding']  = 'gzip, deflate'
+  def prepare_request(request, path, params, opts = {})
+    request.options.timeout = Tml.config.api_client[:timeout]
+    request.options.open_timeout = Tml.config.api_client[:open_timeout]
+    request.headers['User-Agent'] = "tml-ruby v#{Tml::VERSION} (Faraday v#{Faraday::VERSION})"
+    request.headers['Accept'] = 'application/json'
+
+    unless opts[:uncompressed]
+      request.headers['Accept-Encoding'] = 'gzip, deflate'
+    end
+
     request.url(path, params)
   end
 
@@ -266,7 +270,8 @@ class Tml::Api::Client < Tml::Base
 
     path = prepare_api_path(path)
 
-    @compressed = false
+    opts[:method] ||= :get
+
     trace_api_call(path, params, opts.merge(:host => host)) do
       begin
         if opts[:method] == :post
@@ -277,23 +282,25 @@ class Tml::Api::Client < Tml::Base
           response = connection.delete(path, params)
         else
           response = connection.get do |request|
-            @compressed = true
-            prepare_request(request, path, params)
+            prepare_request(request, path, params, opts)
           end
         end
-      rescue Exception => ex
+      rescue => ex
         Tml.logger.error("Failed to execute request: #{ex.message[0..255]}")
         error = ex
         nil
       end
     end
-    raise Tml::Exception.new("Error: #{error}") if error
 
-    if response.status >= 500 and response.status < 600
+    if error
+      raise Tml::Exception.new("Error: #{error}")
+    end
+
+    if response.status >= 500 && response.status < 600
       raise Tml::Exception.new("Error: #{response.body}")
     end
 
-    if @compressed and (not opts[:uncompressed])
+    if opts[:method] == :get && !opts[:uncompressed]
       compressed_data = response.body
       return if compressed_data.nil? or compressed_data == ''
 
@@ -307,7 +314,7 @@ class Tml::Api::Client < Tml::Base
 
     begin
       data = JSON.parse(data)
-    rescue Exception => ex
+    rescue => ex
       raise Tml::Exception.new("Failed to parse response: #{ex.message[0..255]}")
     end
 
