@@ -126,7 +126,6 @@ class Tml::Api::Client < Tml::Base
       adjusted_path += "#{Tml.cache.version.to_s}/#{key}.json#{opts[:uncompressed] ? '' : '.gz'}"
     end
 
-    pp adjusted_path
     adjusted_path
   end
 
