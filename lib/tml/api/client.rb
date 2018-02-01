@@ -110,9 +110,29 @@ class Tml::Api::Client < Tml::Base
     Tml.logger.info("Cache Version: #{Tml.cache.version}")
   end
 
+  def cdn_host
+    @cdn_host ||= URI.join(application.cdn_host, '/').to_s
+  end
+
+  def get_cdn_path(key, opts = {})
+    base_path = URI(application.cdn_host).path
+    base_path += '/' unless base_path.last == '/'
+
+    adjusted_path = "#{base_path}#{application.key}/"
+
+    if key == 'version'
+      adjusted_path += "#{key}.json"
+    else
+      adjusted_path += "#{Tml.cache.version.to_s}/#{key}.json#{opts[:uncompressed] ? '' : '.gz'}"
+    end
+
+    pp adjusted_path
+    adjusted_path
+  end
+
   # cdn_connection
   def cdn_connection
-    @cdn_connection ||= Faraday.new(:url => application.cdn_host) do |faraday|
+    @cdn_connection ||= Faraday.new(:url => cdn_host) do |faraday|
       faraday.request(:url_encoded) # form-encode POST params
       faraday.adapter(Faraday.default_adapter) # make requests with Net::HTTP
     end
@@ -125,20 +145,14 @@ class Tml::Api::Client < Tml::Base
     end
 
     response = nil
-    cdn_path = "/#{application.key}"
-
-    if key == 'version'
-      cdn_path += "/#{key}.json"
-    else
-      cdn_path += "/#{Tml.cache.version.to_s}/#{key}.json#{opts[:uncompressed] ? '' : '.gz'}"
-    end
+    cdn_path = get_cdn_path(key, opts)
 
     trace_api_call(cdn_path, params, opts.merge(:host => application.cdn_host)) do
       begin
         response = cdn_connection.get do |request|
           prepare_request(request, cdn_path, params, opts)
         end
-      rescue Exception => ex
+      rescue => ex
         Tml.logger.error("Failed to execute request: #{ex.message[0..255]}")
         return nil
       end
