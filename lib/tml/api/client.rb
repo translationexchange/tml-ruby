@@ -150,6 +150,15 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  def decompress_data(compressed_data)
+    data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
+    Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+    data
+  rescue => ex
+    Tml.logger.error("Failed to decompress data: #{ex.message[0..255]}")
+    compressed_data
+  end
+
   # get from the CDN
   def get_from_cdn(key, params = {}, opts = {})
     if Tml.cache.version.invalid? and key != 'version'
@@ -159,7 +168,7 @@ class Tml::Api::Client < Tml::Base
     response = nil
     cdn_path = get_cdn_path(key, opts)
 
-    trace_api_call(cdn_path, params, opts.merge(:host => application.api_host)) do
+    trace_api_call(cdn_path, params, opts.merge(:host => cdn_host)) do
       begin
         response = cdn_connection.get do |request|
           prepare_request(request, cdn_path, params, opts)
@@ -172,19 +181,17 @@ class Tml::Api::Client < Tml::Base
     return if response.status >= 500 and response.status < 600
     return if response.body.nil? or response.body == '' or response.body.match(/xml/)
 
-    compressed_data = response.body
-    return if compressed_data.nil? or compressed_data == ''
-
-    data = compressed_data
+    data = response.body
+    return if data.nil? or data == ''
 
     unless opts[:uncompressed]
-      data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
-      Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
+      data = decompress_data(data)
     end
 
     begin
       data = JSON.parse(data)
     rescue => ex
+      Tml.logger.error("Failed to parse response: #{ex.message[0..255]}")
       return nil
     end
 
@@ -334,16 +341,10 @@ class Tml::Api::Client < Tml::Base
 
     if opts[:method] == :get && !opts[:uncompressed]
       return if data.nil? or data == ''
-      compressed_data = data
 
-      begin
-        data = Zlib::GzipReader.new(StringIO.new(data.to_s)).read
-      rescue => ex
-        Tml.logger.error("Failed to decompress data: #{ex.message[0..255]}")
-        data = compressed_data
+      unless opts[:uncompressed]
+        data = decompress_data(data)
       end
-
-      Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
     end
 
     return data if opts[:raw]
