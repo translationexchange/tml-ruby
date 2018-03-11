@@ -69,14 +69,23 @@ class Tml::Api::Client < Tml::Base
     not data['error'].nil?
   end
 
+  def api_uri
+    @api_uri ||= URI::parse(application.host)
+  end
+
   # API Host
-  def host
-    application.host
+  def api_host
+    @api_host ||= begin
+      uri = api_uri.dup
+      uri.path  = ''
+      uri.query = nil
+      uri.to_s
+    end
   end
 
   # API connection
   def connection
-    @connection ||= Faraday.new(:url => host) do |faraday|
+    @connection ||= Faraday.new(:url => api_host) do |faraday|
       faraday.request(:url_encoded) # form-encode POST params
       # faraday.response :logger                  # log requests to STDOUT
       faraday.adapter(Faraday.default_adapter) # make requests with Net::HTTP
@@ -114,6 +123,10 @@ class Tml::Api::Client < Tml::Base
     @cdn_host ||= URI.join(application.cdn_host, '/').to_s
   end
 
+  def cdn_uri
+    @cdn_host ||= URI::parse(application.cdn_host)
+  end
+
   def get_cdn_path(key, opts = {})
     base_path = URI(application.cdn_host).path
     base_path += '/' unless base_path.last == '/'
@@ -146,7 +159,7 @@ class Tml::Api::Client < Tml::Base
     response = nil
     cdn_path = get_cdn_path(key, opts)
 
-    trace_api_call(cdn_path, params, opts.merge(:host => application.cdn_host)) do
+    trace_api_call(cdn_path, params, opts.merge(:host => application.api_host)) do
       begin
         response = cdn_connection.get do |request|
           prepare_request(request, cdn_path, params, opts)
@@ -246,15 +259,19 @@ class Tml::Api::Client < Tml::Base
     end
   end
 
+  def join_uri(*string)
+    string.join('/').gsub(/\/+/, '/')
+  end
+
   # prepares API path
   def prepare_api_path(path)
     return path if path.match(/^https?:\/\//)
     clean_path = trim_prepending_slash(path)
 
     if clean_path.index('v1') == 0 || clean_path.index('v2') == 0
-      "/#{clean_path}"
+      join_uri(api_uri.path, clean_path)
     else
-      "#{API_PATH}/#{clean_path}"
+      join_uri(api_uri.path, API_PATH, clean_path)
     end
   end
 
@@ -285,7 +302,7 @@ class Tml::Api::Client < Tml::Base
 
     opts[:method] ||= :get
 
-    trace_api_call(path, params, opts.merge(:host => host)) do
+    trace_api_call(path, params, opts.merge(:host => api_host)) do
       begin
         if opts[:method] == :post
           response = connection.post(path, params)
@@ -313,14 +330,20 @@ class Tml::Api::Client < Tml::Base
       raise Tml::Exception.new("Error: #{response.body}")
     end
 
-    if opts[:method] == :get && !opts[:uncompressed]
-      compressed_data = response.body
-      return if compressed_data.nil? or compressed_data == ''
+    data = response.body
 
-      data = Zlib::GzipReader.new(StringIO.new(compressed_data.to_s)).read
+    if opts[:method] == :get && !opts[:uncompressed]
+      return if data.nil? or data == ''
+      compressed_data = data
+
+      begin
+        data = Zlib::GzipReader.new(StringIO.new(data.to_s)).read
+      rescue => ex
+        Tml.logger.error("Failed to decompress data: #{ex.message[0..255]}")
+        data = compressed_data
+      end
+
       Tml.logger.debug("Compressed: #{compressed_data.length} Uncompressed: #{data.length}")
-    else
-      data = response.body
     end
 
     return data if opts[:raw]
