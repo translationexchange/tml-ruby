@@ -47,4 +47,22 @@ describe Tml::Api::Client do
       end
     end
   end
+
+  describe 'get_cdn_path' do
+    before { allow(application).to receive(:key).and_return('abc_123') }
+
+    context 'no slash in url' do
+      before { allow(application).to receive(:cdn_host).and_return('www.example.com') }
+      it { expect(client.get_cdn_path('version')).to eq 'www.example.com/abc_123/version.json' }
+    end
+
+    context 'slash in base path' do
+      before { allow(application).to receive(:cdn_host).and_return('www.example.com/') }
+      it { expect(client.get_cdn_path('version')).to eq 'www.example.com/abc_123/version.json' }
+    end
+
+    context 'no base_path' do
+      it { expect(client.get_cdn_path('version')).to eq '/abc_123/version.json' }
+    end
+  end
 end
