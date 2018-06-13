@@ -129,7 +129,8 @@ class Tml::Api::Client < Tml::Base
 
   def get_cdn_path(key, opts = {})
     base_path = URI(application.cdn_host).path
-    base_path += '/' unless base_path.last == '/'
+    # Remove usage of String#last for clients who do not use ActiveSupport
+    base_path += '/' unless base_path.size > 0 && base_path[-1..-1] == '/'
 
     adjusted_path = "#{base_path}#{application.key}/"
 
