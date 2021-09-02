@@ -46,7 +46,7 @@ module Tml
             'cdr'     => lambda { |list|      list.drop(1) },
             'cons'    => lambda { |e, cell|   [e] + cell },
             'eq'      => lambda { |l, r|      l == r },
-            'atom'    => lambda { |expr|      [Symbol, String, Fixnum, Float].include?(expr.class) },
+            'atom'    => lambda { |expr|      [Symbol, String, Integer, Float].include?(expr.class) },
             'cond'    => lambda { |c, t, f|   evaluate(c) ? evaluate(t) : evaluate(f) },
 
             # Tml Extensions

@@ -29,7 +29,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-class Fixnum
+class Integer
 
   def with_leading_zero
     (to_i < 10 ? "0#{to_s}" : to_s)

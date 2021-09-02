@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Fixnum do
+describe Integer do
   describe 'extensions' do
     it 'should properly translate elements' do
       Tml.session.with_block_options(:dry => true) do
